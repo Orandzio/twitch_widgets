@@ -1798,25 +1798,38 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				// Minimum duration to allow a readable entry. Reduced so tiny messages don't feel 'late'.
 				if (durationSeconds < 1.5) durationSeconds = 1.5;
 
-				// We want the alert to *enter* quickly even if duration is long. Compute an absolute entry time window.
-				const absoluteEntryTime = 0.6; // seconds for entry fade-in
-				const entryOffset = Math.min(0.08, absoluteEntryTime / durationSeconds);
-				const exitOffset = 1 - Math.min(0.08, absoluteEntryTime / durationSeconds);
+				// We want the alert to have a smooth curved entry (ease-in), then a steady linear middle,
+				// and a smooth curved exit (ease-out) with a gradual opacity fade so there's no sudden jump.
+				const absoluteEntryTime = 0.6; // seconds for entry time heuristic
+				// Keep entry window between 6% and 18% of the travel distance so entry feels smooth for short and long messages
+				const entryOffset = Math.min(0.18, Math.max(0.06, absoluteEntryTime / durationSeconds));
+				const exitOffset = 1 - entryOffset;
+				const fadeWindow = Math.min(0.12, entryOffset); // fraction to fade out near the end
 
 				// Helper to compute pixel positions for percentage of the travel distance
 				const pos = (p, s = startX, d = distance) => Math.round(s - p * d);
 
 				// place content fully off-screen to the right immediately so it isn't visible before animation starts
 				alertBoxContent.style.transform = `translateX(${startX}px)`;
+				alertBoxContent.style.opacity = '0';
 
-				// Keyframes: start hidden on the right, fade in quickly (absolute time), accelerate through middle, slow before exit, then fade out fully
-				const keyframes = [
-					{ transform: `translateX(${startX}px)`, opacity: 0, offset: 0, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
-					{ transform: `translateX(${pos(entryOffset)}px)`, opacity: 1, offset: entryOffset, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
-					{ transform: `translateX(${pos(0.30)}px)`, offset: 0.30, easing: 'linear' },
-					{ transform: `translateX(${pos(0.60)}px)`, offset: 0.60, easing: 'linear' },
-					{ transform: `translateX(${pos(exitOffset)}px)`, opacity: 1, offset: exitOffset, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
-					{ transform: `translateX(${endX}px)`, opacity: 0, offset: 1 }
+				// Keyframes: smooth ease-in entry, linear middle, smooth ease-out exit with gradual opacity fade
+			let midA = Math.max(entryOffset + 0.02, 0.25);
+			let midB = Math.min(exitOffset - 0.02, 0.75);
+			if (midA >= midB) {
+				midA = Math.max(entryOffset + 0.01, entryOffset);
+				midB = Math.min(exitOffset - 0.01, exitOffset);
+				if (midA >= midB) {
+					midA = entryOffset;
+					midB = exitOffset;
+				}
+			}
+			const keyframes = [
+				{ transform: `translateX(${startX}px)`, opacity: 0, offset: 0 },
+				{ transform: `translateX(${pos(entryOffset)}px)`, opacity: 1, offset: entryOffset, easing: 'cubic-bezier(0.4, 0, 1, 1)' }, // ease-in (accelerating)
+				{ transform: `translateX(${pos(midA)}px)`, opacity: 1, offset: midA, easing: 'linear' },
+				{ transform: `translateX(${pos(midB)}px)`, opacity: 1, offset: midB, easing: 'linear' },
+				{ transform: `translateX(${pos(Math.min(exitOffset + fadeWindow, 0.98))}px)`, opacity: 0.12, offset: Math.min(exitOffset + fadeWindow, 0.98), easing: 'cubic-bezier(0, 0, 0.2, 1)' }, // ease-out (decelerating)
 				];
 
 				// Use the Web Animations API for precise pixel movement
@@ -1909,14 +1922,27 @@ window.addEventListener('resize', () => {
 		const remainingDuration = Math.max((remainingDistance / state.speed) * 1000, 250);
 		// cancel and start new animation from currentX to newEndX
 		anim.cancel();
-		const newKeyframes = [
-			{ transform: `translateX(${currentX}px)`, opacity: 1, offset: 0 },
-			{ transform: `translateX(${newEndX}px)`, opacity: 0, offset: 1 }
-		];
-		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, fill: 'forwards', easing: 'linear' });
-		// update stored state
-		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000 };
-		newAnim.onfinish = anim.onfinish;
+
+		// If we're already well into the exit portion, prefer a gentle ease-out fade to zero
+		const currentProgress = state.distance > 0 ? Math.min(1, (state.startX - currentX) / state.distance) : 0;
+		if (currentProgress >= 0.85) {
+			const newKeyframes = [
+				{ transform: `translateX(${currentX}px)`, opacity: 1, offset: 0 },
+				{ transform: `translateX(${Math.round(newEndX + (state.speed * 0.06))}px)`, opacity: 0.12, offset: 0.85, easing: 'linear' },
+				{ transform: `translateX(${newEndX}px)`, opacity: 0, offset: 1, easing: 'cubic-bezier(0, 0, 0.2, 1)' }
+			];
+			const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, fill: 'forwards' });
+			runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000 };
+			newAnim.onfinish = anim.onfinish;
+		} else {
+			const newKeyframes = [
+				{ transform: `translateX(${currentX}px)`, opacity: 1, offset: 0 },
+				{ transform: `translateX(${newEndX}px)`, opacity: 0, offset: 1, easing: 'cubic-bezier(0, 0, 0.2, 1)' }
+			];
+			const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, fill: 'forwards' });
+			runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000 };
+			newAnim.onfinish = anim.onfinish;
+		}
 	} catch (e) {
 		console.warn('Error adjusting running alert on resize', e);
 	}
