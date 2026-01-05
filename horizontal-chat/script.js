@@ -1766,8 +1766,25 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 	if (background === 'twitch') {
 		// Scroll-right-to-left like a news ticker. Measure widths so it starts fully off the right and exits fully off the left.
 		alertBoxDiv.style.opacity = '1';
-		alertBoxContent.classList.add('scroll-alert-content');
-
+					// Ensure any leftover animations or transforms can't make the next alert start mid-screen
+					try {
+						const anims = alertBoxContent.getAnimations ? alertBoxContent.getAnimations() : [];
+						anims.forEach(a => a.cancel());
+						// Temporarily disable transitions and force an off-screen start so layout/measurements are stable
+						const prevTransition = alertBoxContent.style.transition;
+						alertBoxContent.style.transition = 'none';
+						const margin = 20;
+						const contentRect0 = alertBoxContent.getBoundingClientRect();
+						const desiredLeft0 = window.innerWidth + margin;
+						const offscreenStart0 = Math.round(desiredLeft0 - contentRect0.left);
+						alertBoxContent.style.transform = `translateX(${offscreenStart0}px)`;
+						// Force reflow
+						void alertBoxContent.offsetWidth;
+						// Restore transition immediately
+						setTimeout(() => { alertBoxContent.style.transition = prevTransition || ''; }, 0);
+					} catch (e) {
+						console.warn('Pre-reset for twitch alert failed', e);
+					}
 		// Allow the DOM to update so scrollWidth/clientWidth return correct values and wait for images/fonts if needed
 		setTimeout(async () => {
 			try {
