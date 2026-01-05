@@ -1796,7 +1796,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
 				let durationSeconds = distance / speed;
 			// Slowdown factor controls overall speed; lower = faster exit
-			const slowdownFactor = 1.05; // reduced from 1.35 to speed up exit timing
+			const slowdownFactor = 0.5; // reduced from 1.35 to speed up exit timing
 			durationSeconds *= slowdownFactor;
 			// Minimum duration to allow a readable entry. Adjusted so tiny messages still readable.
 			if (durationSeconds < 1.5) durationSeconds = 1.5;
