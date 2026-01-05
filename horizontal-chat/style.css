@@ -74,6 +74,13 @@ html {
 	line-height: 1.7em;
 	text-align: center;
 	/* background-color: red; */
+
+	/* Make the content an inline-block so we can translate it horizontally */
+	display: inline-block;
+	white-space: nowrap;
+	will-change: transform;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
 }
 
 #alertBoxContent img {
@@ -110,6 +117,12 @@ html {
 	100% {
 		bottom: calc(-1 * var(--margin) - 1.7em);
 	}
+}
+
+/* Scroll text horizontally across the alert box. The JS sets --start and --end */
+@keyframes scrollText {
+    from { transform: translateX(var(--start, 100%)); }
+    to   { transform: translateX(var(--end, -100%)); }
 }
 
 li {

@@ -1753,27 +1753,43 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 	// Set the background
 	alertBoxDiv.classList.add(background);
 
-	// Start the animation
-	widgetLocked = true;
-	// messageListDiv.style.animation = 'hideAlertBox 0.5s ease-in-out forwards';
-	// backgroundDiv.style.animation = 'hideAlertBox 0.5s ease-in-out forwards';
-	alertBoxDiv.style.animation = 'showAlertBox 0.5s ease-in-out forwards';
+	// Prepare horizontal scroll animation
+	const containerWidth = alertBoxDiv.offsetWidth || alertBoxDiv.getBoundingClientRect().width || 0;
+	const contentWidth = alertBoxContent.scrollWidth || alertBoxContent.getBoundingClientRect().width || 0;
 
-	// To stop the animation (remove the animation property):
+	// If duration passed is falsy or zero, compute duration based on length (px per second)
+	let durationMs = duration;
+	if (!durationMs || durationMs <= 0) {
+		const pxPerSec = 120; // speed fallback
+		const distance = containerWidth + contentWidth;
+		durationMs = Math.max(2000, Math.round((distance / pxPerSec) * 1000));
+	}
+
+	// Set CSS vars for the keyframes to use
+	alertBoxContent.style.setProperty('--start', `${containerWidth}px`);
+	alertBoxContent.style.setProperty('--end', `-${contentWidth}px`);
+
+	// Apply the scrolling animation to the content
+	alertBoxContent.style.animation = `scrollText ${durationMs / 1000}s linear forwards`;
+
+	// Lock widget while the alert plays
+	widgetLocked = true;
+
+	// Clear after animation completes and handle queue
 	setTimeout(() => {
-		// messageListDiv.style.animation = 'showAlertBox 0.5s ease-in-out forwards';
-		// backgroundDiv.style.animation = 'showAlertBox 0.5s ease-in-out forwards';
-		alertBoxDiv.style.animation = 'hideAlertBox 0.5s ease-in-out forwards';
-		setTimeout(() => {
-			alertBoxDiv.classList = '';
-			widgetLocked = false;
-			if (alertQueue.length > 0) {
-				console.debug("Pulling next alert from the queue");
-				let data = alertQueue.shift();
-				ShowAlert(data.message, data.background, data.duration);
-			}
-		}, 500);
-	}, duration); // Remove after 5 seconds
+		// Remove animation and reset
+		alertBoxContent.style.animation = '';
+		alertBoxContent.style.removeProperty('--start');
+		alertBoxContent.style.removeProperty('--end');
+		// Clear any background class we added
+		alertBoxDiv.classList = '';
+		widgetLocked = false;
+		if (alertQueue.length > 0) {
+			console.debug("Pulling next alert from the queue");
+			let data = alertQueue.shift();
+			ShowAlert(data.message, data.background, data.duration);
+		}
+	}, durationMs);
 }
 
 function GetWinnersList(gifts) {
