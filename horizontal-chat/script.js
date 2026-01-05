@@ -1766,25 +1766,8 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 	if (background === 'twitch') {
 		// Scroll-right-to-left like a news ticker. Measure widths so it starts fully off the right and exits fully off the left.
 		alertBoxDiv.style.opacity = '1';
-					// Ensure any leftover animations or transforms can't make the next alert start mid-screen
-					try {
-						const anims = alertBoxContent.getAnimations ? alertBoxContent.getAnimations() : [];
-						anims.forEach(a => a.cancel());
-						// Temporarily disable transitions and force an off-screen start so layout/measurements are stable
-						const prevTransition = alertBoxContent.style.transition;
-						alertBoxContent.style.transition = 'none';
-						const margin = 20;
-						const contentRect0 = alertBoxContent.getBoundingClientRect();
-						const desiredLeft0 = window.innerWidth + margin;
-						const offscreenStart0 = Math.round(desiredLeft0 - contentRect0.left);
-						alertBoxContent.style.transform = `translateX(${offscreenStart0}px)`;
-						// Force reflow
-						void alertBoxContent.offsetWidth;
-						// Restore transition immediately
-						setTimeout(() => { alertBoxContent.style.transition = prevTransition || ''; }, 0);
-					} catch (e) {
-						console.warn('Pre-reset for twitch alert failed', e);
-					}
+		alertBoxContent.classList.add('scroll-alert-content');
+
 		// Allow the DOM to update so scrollWidth/clientWidth return correct values and wait for images/fonts if needed
 		setTimeout(async () => {
 			try {
@@ -1875,38 +1858,8 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					clearTimeout(gradientOutTimer);
 					// Helper to finalise cleanup after gradient transition finishes
 					const finishCleanup = () => {
-						// Cancel any lingering animations on the content so inline styles take effect reliably
-						try {
-							const anims = alertBoxContent.getAnimations ? alertBoxContent.getAnimations() : [];
-							anims.forEach(a => a.cancel());
-						} catch (e) {
-							console.warn('Failed to cancel content animations', e);
-						}
-
-						// Force the element to a definite off-screen right position with a small margin so it never starts mid-screen
-						try {
-							// Temporarily disable CSS transitions to avoid any intermediate motion
-							const prevTransition = alertBoxContent.style.transition;
-							alertBoxContent.style.transition = 'none';
-
-							const contentRect2 = alertBoxContent.getBoundingClientRect();
-							const margin = 20; // px beyond the viewport
-							const desiredLeft = window.innerWidth + margin;
-							const freshStartX = Math.round(desiredLeft - contentRect2.left);
-
-							// Guard: ensure it's a large positive value so element is off-screen right
-							const finalStartX = freshStartX <= 0 ? Math.round(window.innerWidth + contentRect2.width + margin) : freshStartX;
-							alertBoxContent.style.transform = `translateX(${finalStartX}px)`;
-							// Force reflow so the transform takes effect immediately
-							void alertBoxContent.offsetWidth;
-							// Restore previous transition after a tick
-							setTimeout(() => { alertBoxContent.style.transition = prevTransition || ''; }, 0);
-							console.debug('Alert cleanup: reset transform to', finalStartX);
-						} catch (e) {
-							alertBoxContent.style.transform = '';
-							console.warn('Alert cleanup: failed to compute fresh startX', e);
-						}
-
+						// Reset content back to the starting (off-screen right) position so the next alert starts correctly
+						alertBoxContent.style.transform = `translateX(${startX}px)`;
 						alertBoxContent.style.opacity = '';
 						alertBoxContent.classList.remove('scroll-alert-content');
 						// Reset gradient classes and background
