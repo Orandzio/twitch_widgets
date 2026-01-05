@@ -1754,20 +1754,29 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 	alertBoxDiv.classList.add(background);
 
 	// Prepare horizontal scroll animation
-	const containerWidth = alertBoxDiv.offsetWidth || alertBoxDiv.getBoundingClientRect().width || 0;
+	// Use the viewport width to ensure the text fully leaves both sides
+	const containerWidth = Math.max(window.innerWidth || 0, alertBoxDiv.offsetWidth || alertBoxDiv.getBoundingClientRect().width || 0);
 	const contentWidth = alertBoxContent.scrollWidth || alertBoxContent.getBoundingClientRect().width || 0;
+	const extraPad = 20; // extra pixels to ensure fully off-screen
+
+	// Compute start (off to the right) and end (off to the left)
+	const startPx = containerWidth + extraPad;
+	const endPx = -(contentWidth + extraPad);
 
 	// If duration passed is falsy or zero, compute duration based on length (px per second)
 	let durationMs = duration;
 	if (!durationMs || durationMs <= 0) {
 		const pxPerSec = 120; // speed fallback
-		const distance = containerWidth + contentWidth;
+		const distance = Math.abs(startPx - endPx);
 		durationMs = Math.max(2000, Math.round((distance / pxPerSec) * 1000));
 	}
 
-	// Set CSS vars for the keyframes to use
-	alertBoxContent.style.setProperty('--start', `${containerWidth}px`);
-	alertBoxContent.style.setProperty('--end', `-${contentWidth}px`);
+	// Set CSS vars for the keyframes to use (px values)
+	alertBoxContent.style.setProperty('--start', `${startPx}px`);
+	alertBoxContent.style.setProperty('--end', `${endPx}px`);
+
+	// Ensure starting transform before animation begins to avoid visual jump
+	alertBoxContent.style.transform = `translateX(${startPx}px)`;
 
 	// Apply the scrolling animation to the content
 	alertBoxContent.style.animation = `scrollText ${durationMs / 1000}s linear forwards`;
@@ -1781,8 +1790,9 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 		alertBoxContent.style.animation = '';
 		alertBoxContent.style.removeProperty('--start');
 		alertBoxContent.style.removeProperty('--end');
+		alertBoxContent.style.transform = '';
 		// Clear any background class we added
-		alertBoxDiv.classList = '';
+		alertBoxDiv.className = '';
 		widgetLocked = false;
 		if (alertQueue.length > 0) {
 			console.debug("Pulling next alert from the queue");
