@@ -1795,11 +1795,11 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				// Speed tuning (px per second). Lower = slower. Adjust to taste.
 				const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
 				let durationSeconds = distance / speed;
-			// Slow down overall to make motion less frantic
-			const slowdownFactor = 1.35; // >1 slows down the animation; tweak to taste
+			// Slowdown factor controls overall speed; lower = faster exit
+			const slowdownFactor = 1.05; // reduced from 1.35 to speed up exit timing
 			durationSeconds *= slowdownFactor;
-			// Minimum duration to allow a readable entry. Increased so tiny messages don't feel too fast.
-			if (durationSeconds < 2.0) durationSeconds = 2.0;
+			// Minimum duration to allow a readable entry. Adjusted so tiny messages still readable.
+			if (durationSeconds < 1.5) durationSeconds = 1.5;
 				const absoluteEntryTime = 0.6; // seconds for entry time heuristic
 				// Keep entry window between 6% and 18% of the travel distance so entry feels smooth for short and long messages
 				const entryOffset = Math.min(0.18, Math.max(0.06, absoluteEntryTime / durationSeconds));
