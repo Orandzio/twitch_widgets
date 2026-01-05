@@ -1784,72 +1784,117 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 200))]);
 				}
 
-				// Measure using viewport-aware bounding rects so the animation matches 100vw (OBS width) exactly
+				// Measure using viewport-aware bounding rects so the animation matches 100vw exactly
 				const contentRect = alertBoxContent.getBoundingClientRect();
 				const contentWidth = contentRect.width;
 				// Start just beyond the right edge of the viewport, end just beyond the left edge of the viewport (fully off-screen)
 				const startX = Math.round(window.innerWidth - contentRect.left);
 				const endX = Math.round(-contentRect.right);
-				const distance = startX - endX;
 
-				// Speed tuning (px per second). Lower = slower. Adjust to taste.
+				// Speed tuning (px per second). Lower = slower.
 				const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
-				let durationSeconds = distance / speed;
-				// Minimum duration to allow a readable entry. Reduced so tiny messages don't feel 'late'.
-				if (durationSeconds < 1.5) durationSeconds = 1.5;
 
-				// We want the alert to *enter* quickly even if duration is long. Compute an absolute entry time window.
-				const absoluteEntryTime = 0.6; // seconds for entry fade-in
-				const entryOffset = Math.min(0.08, absoluteEntryTime / durationSeconds);
-				const exitOffset = 1 - Math.min(0.08, absoluteEntryTime / durationSeconds);
+				// Compute target positions for entry/linear/exit phases
+				const rightMargin = 8;
+				const leftMargin = 8;
+				const visibleX = Math.round((window.innerWidth - rightMargin) - contentRect.right); // fully visible within viewport on the right side
+				const exitMs = 300; // ease-out duration (ms)
+				const entryMs = 300; // ease-in duration (ms)
 
-				// Helper to compute pixel positions for percentage of the travel distance
-				const pos = (p, s = startX, d = distance) => Math.round(s - p * d);
+				const distance = startX - endX;
 
 				// place content fully off-screen to the right immediately so it isn't visible before animation starts
 				alertBoxContent.style.transform = `translateX(${startX}px)`;
+				alertBoxContent.getBoundingClientRect(); // force reflow
 
-				// Keyframes: start hidden on the right, fade in quickly (absolute time), accelerate through middle, slow before exit, then fade out fully
-				const keyframes = [
-					{ transform: `translateX(${startX}px)`, opacity: 0, offset: 0, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
-					{ transform: `translateX(${pos(entryOffset)}px)`, opacity: 1, offset: entryOffset, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
-					{ transform: `translateX(${pos(0.30)}px)`, offset: 0.30, easing: 'linear' },
-					{ transform: `translateX(${pos(0.60)}px)`, offset: 0.60, easing: 'linear' },
-					{ transform: `translateX(${pos(exitOffset)}px)`, opacity: 1, offset: exitOffset, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
-					{ transform: `translateX(${endX}px)`, opacity: 0, offset: 1 }
-				];
+				let cancelled = false;
+				let currentAnim = null;
+				function doCancel() {
+					cancelled = true;
+					if (currentAnim && typeof currentAnim.cancel === 'function') currentAnim.cancel();
+				}
 
-				// Use the Web Animations API for precise pixel movement
-				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, fill: 'forwards' });
-
-				// Store state for live resize adjustments
+				// Store state for resize/cancel support
 				runningAlertState = {
-					anim,
+					anim: null,
 					startX,
 					endX,
 					distance,
-					durationSeconds,
 					speed,
 					alertBoxContent,
-					alertBoxDiv
+					alertBoxDiv,
+					contentRect,
+					cancel: doCancel
 				};
 
-				anim.onfinish = () => {
-					// Cleanup
-					alertBoxContent.style.transform = '';
-					alertBoxContent.style.opacity = '';
-					alertBoxContent.classList.remove('scroll-alert-content');
-					alertBoxDiv.classList = '';
-					alertBoxDiv.style.opacity = '';
-					widgetLocked = false;
-					runningAlertState = null;
-					if (alertQueue.length > 0) {
-						console.debug("Pulling next alert from the queue");
-						let data = alertQueue.shift();
-						ShowAlert(data.message, data.background, data.duration);
-					}
+				// Helper: run a WAAPI animation and await it (handles cancel)
+				const playAnim = (el, frames, opts) => {
+					currentAnim = el.animate(frames, opts);
+					runningAlertState.anim = currentAnim;
+					return new Promise((res) => {
+						currentAnim.onfinish = () => res({ cancelled: false });
+						currentAnim.oncancel = () => res({ cancelled: true });
+					});
 				};
+
+				// 1) Ease-in entry to fully visible
+				await playAnim(alertBoxContent, [{ transform: `translateX(${startX}px)` }, { transform: `translateX(${visibleX}px)` }], { duration: entryMs, easing: 'cubic-bezier(0.2, 0, 0.2, 1)', fill: 'forwards' });
+				if (cancelled) throw new Error('cancelled');
+
+				// 2) Linear middle cruising from visibleX to exitStartX
+				const exitStartX = endX + Math.round(speed * (exitMs / 1000)); // distance reserved for exit ease
+				let middleDistance = visibleX - exitStartX;
+				if (middleDistance > 0) {
+					let middleDuration = Math.max((middleDistance / speed) * 1000, 0);
+					// linear rAF loop for perfectly steady speed
+					await new Promise((res) => {
+						const t0 = performance.now();
+						function step(now) {
+							if (cancelled) return res({ cancelled: true });
+							const elapsed = now - t0;
+							const t = Math.min(1, middleDuration ? (elapsed / middleDuration) : 1);
+							const curX = visibleX + (exitStartX - visibleX) * t;
+							alertBoxContent.style.transition = 'none';
+							alertBoxContent.style.transform = `translateX(${Math.round(curX)}px)`;
+							if (t < 1) requestAnimationFrame(step);
+							else res({ cancelled: false });
+						}
+						if (middleDuration <= 16) {
+							alertBoxContent.style.transform = `translateX(${exitStartX}px)`;
+							return res({ cancelled: false });
+						}
+						requestAnimationFrame(step);
+					});
+					if (cancelled) throw new Error('cancelled');
+				} else {
+					// no middle segment for very short messages - jump to exitStartX
+					alertBoxContent.style.transform = `translateX(${exitStartX}px)`;
+				}
+
+				// 3) Ease-out exit fully off screen
+				await playAnim(alertBoxContent, [{ transform: `translateX(${exitStartX}px)` }, { transform: `translateX(${endX}px)` }], { duration: exitMs, easing: 'cubic-bezier(0.2, 0, 0, 1)', fill: 'forwards' });
+
+				// Cleanup
+				alertBoxContent.style.transform = '';
+				alertBoxContent.classList.remove('scroll-alert-content');
+				alertBoxDiv.classList = '';
+				alertBoxDiv.style.opacity = '';
+				widgetLocked = false;
+				runningAlertState = null;
+				if (alertQueue.length > 0) {
+					console.debug("Pulling next alert from the queue");
+					let data = alertQueue.shift();
+					ShowAlert(data.message, data.background, data.duration);
+				}
 			} catch (e) {
+				// Cancelled or failed - ensure cleanup and fallback
+				try { if (runningAlertState?.cancel) runningAlertState.cancel(); } catch(_) {}
+				alertBoxContent.style.transform = '';
+				alertBoxContent.classList.remove('scroll-alert-content');
+				alertBoxDiv.classList = '';
+				alertBoxDiv.style.opacity = '';
+				widgetLocked = false;
+				runningAlertState = null;
 				console.warn('Error while preparing twitch alert animation', e);
 				// Fallback: just show and clear after duration
 				alertBoxDiv.style.opacity = '1';
@@ -1891,32 +1936,49 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 
 // Handle window resize to adapt running twitch alert animation to new viewport width
 window.addEventListener('resize', () => {
-	if (!runningAlertState || !runningAlertState.anim) return;
+	if (!runningAlertState) return;
 	try {
 		const state = runningAlertState;
-		const anim = state.anim;
-		const elapsed = anim.currentTime || 0;
-		const oldTotal = state.durationSeconds * 1000;
-		const progress = oldTotal > 0 ? Math.min(1, elapsed / oldTotal) : 0;
-		// compute current position
-		const currentX = state.startX - progress * state.distance;
-		// compute new endpoints based on viewport
-		const contentRect = state.alertBoxContent.getBoundingClientRect();
-		const newStartX = Math.round(window.innerWidth - contentRect.left);
-		const newEndX = Math.round(-contentRect.right);
+		let currentX;
+		const currentRect = state.alertBoxContent.getBoundingClientRect();
+		if (state.anim && state.anim.currentTime != null) {
+			const anim = state.anim;
+			const elapsed = anim.currentTime || 0;
+			const oldTotal = state.durationSeconds ? state.durationSeconds * 1000 : (state.distance / state.speed) * 1000;
+			const progress = oldTotal > 0 ? Math.min(1, elapsed / oldTotal) : 0;
+			currentX = Math.round(state.startX - progress * state.distance);
+		} else {
+			// compute current transform based on DOM rects (handles rAF-driven mid-phase)
+			currentX = Math.round(currentRect.left - (state.contentRect?.left ?? currentRect.left));
+		}
+		// compute new endX based on updated bounding rect
+		const newEndX = Math.round(-currentRect.right);
 		const remainingDistance = currentX - newEndX;
 		if (remainingDistance <= 0) return; // nothing to do
 		const remainingDuration = Math.max((remainingDistance / state.speed) * 1000, 250);
-		// cancel and start new animation from currentX to newEndX
-		anim.cancel();
+		// cancel any running animation/rAF
+		if (state.anim) state.anim.cancel();
+		if (typeof state.cancel === 'function') state.cancel();
+		// start a linear animation to the new end
 		const newKeyframes = [
-			{ transform: `translateX(${currentX}px)`, opacity: 1, offset: 0 },
-			{ transform: `translateX(${newEndX}px)`, opacity: 0, offset: 1 }
+			{ transform: `translateX(${currentX}px)`, offset: 0 },
+			{ transform: `translateX(${newEndX}px)`, offset: 1 }
 		];
 		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, fill: 'forwards', easing: 'linear' });
-		// update stored state
-		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000 };
-		newAnim.onfinish = anim.onfinish;
+		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000, contentRect: currentRect, cancel: null };
+		newAnim.onfinish = () => {
+			// cleanup
+			state.alertBoxContent.style.transform = '';
+			state.alertBoxContent.classList.remove('scroll-alert-content');
+			state.alertBoxDiv.classList = '';
+			state.alertBoxDiv.style.opacity = '';
+			widgetLocked = false;
+			runningAlertState = null;
+			if (alertQueue.length > 0) {
+				let data = alertQueue.shift();
+				ShowAlert(data.message, data.background, data.duration);
+			}
+		};
 	} catch (e) {
 		console.warn('Error adjusting running alert on resize', e);
 	}

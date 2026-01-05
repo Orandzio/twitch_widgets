@@ -340,17 +340,12 @@ li {
 .scroll-alert-content {
 	display: inline-block;
 	white-space: nowrap;
-	will-change: transform, opacity;
+	will-change: transform; /* keep opacity constant to avoid fades */
 }
 
 @keyframes scrollAlert {
 	0% {
 		transform: translateX(100%);
-		opacity: 0;
-	}
-
-	8% {
-		opacity: 1; /* fade in quickly */
 	}
 
 	30% {
@@ -366,11 +361,9 @@ li {
 	92% {
 		/* approaching the left edge (slow down) */
 		transform: translateX(-100%);
-		opacity: 1;
 	}
 
 	100% {
 		transform: translateX(-100%);
-		opacity: 0; /* fade out */
 	}
 }
