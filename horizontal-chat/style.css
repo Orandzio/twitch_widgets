@@ -340,7 +340,6 @@ li {
 .scroll-alert-content {
 	display: inline-block;
 	white-space: nowrap;
-	transform: translateX(100%);
 	will-change: transform, opacity;
 }
 

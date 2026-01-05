@@ -9,6 +9,7 @@ const sbServerAddress = urlParams.get("address") || "127.0.0.1";
 const sbServerPort = urlParams.get("port") || "8080";
 const minimumRole = 2;							// 1 - Viewer, 2 - VIP, 3 - Moderator, 4 - Broadcaster
 const animationDuration = 8000;
+const twitchAlertSpeed = GetIntParam("twitchAlertSpeed", 220); // px per second for twitch ticker
 let widgetLocked = false;						// Needed to lock animation from overlapping
 let alertQueue = [];
 
@@ -1757,7 +1758,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 	widgetLocked = true;
 
 	if (background === 'twitch') {
-		// Scroll-right-to-left like a news ticker. We measure widths to pick a natural duration.
+		// Scroll-right-to-left like a news ticker. Measure widths so it starts fully off the right and exits fully off the left.
 		alertBoxDiv.style.opacity = '1';
 		alertBoxContent.classList.add('scroll-alert-content');
 
@@ -1765,16 +1766,41 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 		setTimeout(() => {
 			const contentWidth = alertBoxContent.scrollWidth;
 			const containerWidth = alertBoxDiv.clientWidth;
-			const speed = 160; // pixels per second — tweakable
-			let durationSeconds = (contentWidth + containerWidth) / speed;
-			if (durationSeconds < 3) durationSeconds = 3; // ensure it's not too quick
 
-			// Use the scroll keyframes; linear timing maps keyframe percentages to time, letting the keyframes mimic easing
-			alertBoxContent.style.animation = `scrollAlert ${durationSeconds}s linear forwards`;
+			// Pixel positions: start off-screen to the right, end fully off-screen to the left
+			const startX = containerWidth; // content starts just beyond right edge
+			const endX = -contentWidth; // content ends just beyond left edge
+			const distance = startX - endX; // total pixels to travel
 
-			// Cleanup when animation finishes
-			setTimeout(() => {
-				alertBoxContent.style.animation = '';
+			// Speed tuning (px per second). Lower = slower. Adjust to taste.
+			const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
+			let durationSeconds = distance / speed;
+			if (durationSeconds < 3) durationSeconds = 3; // minimum so reading isn't too quick
+
+			// Helper to compute pixel positions for percentage of the travel distance
+			const pos = (p) => Math.round(startX - p * distance);
+
+			// place content fully off-screen to the right immediately so it isn't visible before animation starts
+			alertBoxContent.style.transform = `translateX(${startX}px)`;
+
+			// Keyframes: start hidden on the right, fade in quickly, accelerate through middle, slow before exit, then fade out fully
+			const keyframes = [
+				// ensure content starts fully off-screen to the right
+				{ transform: `translateX(${startX}px)`, opacity: 0, offset: 0, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+				{ transform: `translateX(${pos(0.08)}px)`, opacity: 1, offset: 0.08, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+				{ transform: `translateX(${pos(0.30)}px)`, offset: 0.30, easing: 'linear' },
+				{ transform: `translateX(${pos(0.60)}px)`, offset: 0.60, easing: 'linear' },
+				{ transform: `translateX(${pos(0.92)}px)`, opacity: 1, offset: 0.92, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+				{ transform: `translateX(${endX}px)`, opacity: 0, offset: 1 }
+			];
+
+			// Use the Web Animations API for precise pixel movement
+			const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, fill: 'forwards' });
+
+			anim.onfinish = () => {
+				// Cleanup
+				alertBoxContent.style.transform = '';
+				alertBoxContent.style.opacity = '';
 				alertBoxContent.classList.remove('scroll-alert-content');
 				alertBoxDiv.classList = '';
 				alertBoxDiv.style.opacity = '';
@@ -1784,7 +1810,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					let data = alertQueue.shift();
 					ShowAlert(data.message, data.background, data.duration);
 				}
-			}, durationSeconds * 1000 + 120);
+			};
 		}, 0);
 
 	} else {
