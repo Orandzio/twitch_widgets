@@ -1763,7 +1763,17 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 		alertBoxDiv.style.opacity = '1';
 		alertBoxContent.classList.add('scroll-alert-content');
 
+		// Defensive: cancel any leftover animation and reset inline styles so measurements are accurate
+		if (runningAlertState && runningAlertState.anim) {
+			try { runningAlertState.anim.cancel(); } catch (e) { /* ignore */ }
+			runningAlertState = null;
+		}
+		alertBoxContent.style.transform = '';
+		alertBoxContent.style.opacity = '';
 		// Allow the DOM to update so scrollWidth/clientWidth return correct values and wait for images/fonts if needed
+		// Wait two frames so class/style changes settle before measuring
+		await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+		
 		setTimeout(async () => {
 			try {
 				// Wait for images in the content to load (but don't wait more than 300ms)
@@ -1826,7 +1836,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					alertBoxContent.style.transform = '';
 					alertBoxContent.style.opacity = '';
 					alertBoxContent.classList.remove('scroll-alert-content');
-					alertBoxDiv.classList = '';
+					if (background) alertBoxDiv.classList.remove(background);
 					alertBoxDiv.style.opacity = '';
 					widgetLocked = false;
 					runningAlertState = null;
@@ -1841,7 +1851,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				// Fallback: just show and clear after duration
 				alertBoxDiv.style.opacity = '1';
 				setTimeout(() => {
-					alertBoxDiv.classList = '';
+					if (background) alertBoxDiv.classList.remove(background);
 					alertBoxDiv.style.opacity = '';
 					widgetLocked = false;
 					if (alertQueue.length > 0) {
