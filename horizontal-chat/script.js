@@ -1858,8 +1858,25 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					clearTimeout(gradientOutTimer);
 					// Helper to finalise cleanup after gradient transition finishes
 					const finishCleanup = () => {
-						// Reset content back to the starting (off-screen right) position so the next alert starts correctly
-						alertBoxContent.style.transform = `translateX(${startX}px)`;
+						// Cancel any lingering animations on the content so inline styles take effect reliably
+						try {
+							const anims = alertBoxContent.getAnimations ? alertBoxContent.getAnimations() : [];
+							anims.forEach(a => a.cancel());
+						} catch (e) {
+							console.warn('Failed to cancel content animations', e);
+						}
+
+						// Compute a fresh starting X so the next alert always starts off-screen right
+						try {
+							const contentRect2 = alertBoxContent.getBoundingClientRect();
+							const freshStartX = Math.round(window.innerWidth - contentRect2.left);
+							alertBoxContent.style.transform = `translateX(${freshStartX}px)`;
+							console.debug('Alert cleanup: reset transform to', freshStartX);
+						} catch (e) {
+							alertBoxContent.style.transform = '';
+							console.warn('Alert cleanup: failed to compute fresh startX', e);
+						}
+
 						alertBoxContent.style.opacity = '';
 						alertBoxContent.classList.remove('scroll-alert-content');
 						// Reset gradient classes and background
