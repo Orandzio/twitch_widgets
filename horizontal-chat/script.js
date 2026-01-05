@@ -83,6 +83,7 @@ const furryMode = GetBooleanParam("furryMode", false);
 ////////////////////
 
 const animationSpeed = GetIntParam("animationSpeed", 0.5);
+let runningAlertState = null;
 const randomYouTubeColors = GetBooleanParam("randomYouTubeColors", false);
 const youtubeColor = urlParams.get("youtubeColor") || "#f70000";
 const youtubeCustomSubIcon = urlParams.get("youtubeCustomSubIcon") || "";
@@ -1783,18 +1784,19 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 200))]);
 				}
 
-				const contentWidth = alertBoxContent.scrollWidth;
-				const containerWidth = alertBoxDiv.clientWidth;
-
-				// Pixel positions: start off-screen to the right, end fully off-screen to the left
-				const startX = containerWidth; // content starts just beyond right edge
-				const endX = -contentWidth; // content ends just beyond left edge
-				const distance = startX - endX; // total pixels to travel
+				// Measure using viewport-aware bounding rects so the animation matches 100vw (OBS width) exactly
+				const contentRect = alertBoxContent.getBoundingClientRect();
+				const contentWidth = contentRect.width;
+				// Start just beyond the right edge of the viewport, end just beyond the left edge of the viewport (fully off-screen)
+				const startX = Math.round(window.innerWidth - contentRect.left);
+				const endX = Math.round(-contentRect.right);
+				const distance = startX - endX;
 
 				// Speed tuning (px per second). Lower = slower. Adjust to taste.
 				const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
 				let durationSeconds = distance / speed;
-				if (durationSeconds < 3) durationSeconds = 3; // minimum so reading isn't too quick
+				// Minimum duration to allow a readable entry. Reduced so tiny messages don't feel 'late'.
+				if (durationSeconds < 1.5) durationSeconds = 1.5;
 
 				// We want the alert to *enter* quickly even if duration is long. Compute an absolute entry time window.
 				const absoluteEntryTime = 0.6; // seconds for entry fade-in
@@ -1802,7 +1804,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				const exitOffset = 1 - Math.min(0.08, absoluteEntryTime / durationSeconds);
 
 				// Helper to compute pixel positions for percentage of the travel distance
-				const pos = (p) => Math.round(startX - p * distance);
+				const pos = (p, s = startX, d = distance) => Math.round(s - p * d);
 
 				// place content fully off-screen to the right immediately so it isn't visible before animation starts
 				alertBoxContent.style.transform = `translateX(${startX}px)`;
@@ -1820,6 +1822,18 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				// Use the Web Animations API for precise pixel movement
 				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, fill: 'forwards' });
 
+				// Store state for live resize adjustments
+				runningAlertState = {
+					anim,
+					startX,
+					endX,
+					distance,
+					durationSeconds,
+					speed,
+					alertBoxContent,
+					alertBoxDiv
+				};
+
 				anim.onfinish = () => {
 					// Cleanup
 					alertBoxContent.style.transform = '';
@@ -1828,6 +1842,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					alertBoxDiv.classList = '';
 					alertBoxDiv.style.opacity = '';
 					widgetLocked = false;
+					runningAlertState = null;
 					if (alertQueue.length > 0) {
 						console.debug("Pulling next alert from the queue");
 						let data = alertQueue.shift();
@@ -1873,6 +1888,39 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 		}, duration); // Remove after 5 seconds
 	}
 }
+
+// Handle window resize to adapt running twitch alert animation to new viewport width
+window.addEventListener('resize', () => {
+	if (!runningAlertState || !runningAlertState.anim) return;
+	try {
+		const state = runningAlertState;
+		const anim = state.anim;
+		const elapsed = anim.currentTime || 0;
+		const oldTotal = state.durationSeconds * 1000;
+		const progress = oldTotal > 0 ? Math.min(1, elapsed / oldTotal) : 0;
+		// compute current position
+		const currentX = state.startX - progress * state.distance;
+		// compute new endpoints based on viewport
+		const contentRect = state.alertBoxContent.getBoundingClientRect();
+		const newStartX = Math.round(window.innerWidth - contentRect.left);
+		const newEndX = Math.round(-contentRect.right);
+		const remainingDistance = currentX - newEndX;
+		if (remainingDistance <= 0) return; // nothing to do
+		const remainingDuration = Math.max((remainingDistance / state.speed) * 1000, 250);
+		// cancel and start new animation from currentX to newEndX
+		anim.cancel();
+		const newKeyframes = [
+			{ transform: `translateX(${currentX}px)`, opacity: 1, offset: 0 },
+			{ transform: `translateX(${newEndX}px)`, opacity: 0, offset: 1 }
+		];
+		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, fill: 'forwards', easing: 'linear' });
+		// update stored state
+		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000 };
+		newAnim.onfinish = anim.onfinish;
+	} catch (e) {
+		console.warn('Error adjusting running alert on resize', e);
+	}
+});
 
 function GetWinnersList(gifts) {
 	const winners = gifts.map(gift => gift.winner);
