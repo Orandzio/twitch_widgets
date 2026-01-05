@@ -1845,10 +1845,39 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					alertBoxContent.style.transform = '';
 					alertBoxContent.style.opacity = '';
 					alertBoxContent.classList.remove('scroll-alert-content');
-					alertBoxDiv.classList = '';
-					alertBoxDiv.style.opacity = '';
-					widgetLocked = false;
-					runningAlertState = null;
+
+					// Trigger gradient-out transition to ease the background out smoothly
+					alertBoxDiv.classList.remove('bg-in');
+					alertBoxDiv.classList.add('bg-out');
+
+					const finishCleanup = () => {
+						alertBoxDiv.classList = '';
+						alertBoxDiv.style.opacity = '';
+						widgetLocked = false;
+						runningAlertState = null;
+						if (alertQueue.length > 0) {
+							console.debug("Pulling next alert from the queue");
+							let data = alertQueue.shift();
+							ShowAlert(data.message, data.background, data.duration);
+						}
+					};
+
+					const onTransition = (e) => {
+						if (e && e.propertyName && (e.propertyName.indexOf('background') !== -1 || e.propertyName.indexOf('background-position') !== -1)) {
+							alertBoxDiv.removeEventListener('transitionend', onTransition);
+							clearTimeout(fallback);
+							finishCleanup();
+						}
+					};
+
+					// Fallback: compute duration from CSS var and add small buffer
+					const cssDuration = getComputedStyle(alertBoxDiv).getPropertyValue('--gradient-out-duration') || '0.9s';
+					const fallback = setTimeout(() => {
+						alertBoxDiv.removeEventListener('transitionend', onTransition);
+						finishCleanup();
+					}, (parseFloat(cssDuration) * 1000) + 250);
+
+					alertBoxDiv.addEventListener('transitionend', onTransition);
 					if (alertQueue.length > 0) {
 						console.debug("Pulling next alert from the queue");
 						let data = alertQueue.shift();
