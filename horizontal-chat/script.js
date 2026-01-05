@@ -1858,7 +1858,8 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					clearTimeout(gradientOutTimer);
 					// Helper to finalise cleanup after gradient transition finishes
 					const finishCleanup = () => {
-						alertBoxContent.style.transform = '';
+						// Reset content back to the starting (off-screen right) position so the next alert starts correctly
+						alertBoxContent.style.transform = `translateX(${startX}px)`;
 						alertBoxContent.style.opacity = '';
 						alertBoxContent.classList.remove('scroll-alert-content');
 						// Reset gradient classes and background
