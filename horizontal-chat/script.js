@@ -1866,12 +1866,25 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 							console.warn('Failed to cancel content animations', e);
 						}
 
-						// Compute a fresh starting X so the next alert always starts off-screen right
+						// Force the element to a definite off-screen right position with a small margin so it never starts mid-screen
 						try {
+							// Temporarily disable CSS transitions to avoid any intermediate motion
+							const prevTransition = alertBoxContent.style.transition;
+							alertBoxContent.style.transition = 'none';
+
 							const contentRect2 = alertBoxContent.getBoundingClientRect();
-							const freshStartX = Math.round(window.innerWidth - contentRect2.left);
-							alertBoxContent.style.transform = `translateX(${freshStartX}px)`;
-							console.debug('Alert cleanup: reset transform to', freshStartX);
+							const margin = 20; // px beyond the viewport
+							const desiredLeft = window.innerWidth + margin;
+							const freshStartX = Math.round(desiredLeft - contentRect2.left);
+
+							// Guard: ensure it's a large positive value so element is off-screen right
+							const finalStartX = freshStartX <= 0 ? Math.round(window.innerWidth + contentRect2.width + margin) : freshStartX;
+							alertBoxContent.style.transform = `translateX(${finalStartX}px)`;
+							// Force reflow so the transform takes effect immediately
+							void alertBoxContent.offsetWidth;
+							// Restore previous transition after a tick
+							setTimeout(() => { alertBoxContent.style.transition = prevTransition || ''; }, 0);
+							console.debug('Alert cleanup: reset transform to', finalStartX);
 						} catch (e) {
 							alertBoxContent.style.transform = '';
 							console.warn('Alert cleanup: failed to compute fresh startX', e);
