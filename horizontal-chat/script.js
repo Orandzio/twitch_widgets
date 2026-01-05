@@ -1754,8 +1754,9 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 
 	// Set the background
 	alertBoxDiv.classList.add(background);
-	// Smoothly ease the gradient in: add 'bg-in' on the next frame so the transition runs
+	// Smoothly ease the gradient in: ensure any previous bg-out is cleared, then add 'bg-in' on the next frame so the transition runs (longer, smoother)
 	requestAnimationFrame(() => {
+		alertBoxDiv.classList.remove('bg-out');
 		alertBoxDiv.classList.add('bg-in');
 	});
 
@@ -1827,6 +1828,17 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				// Use the Web Animations API with a single ease-in-out for smooth motion
 				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, easing: 'cubic-bezier(0.28, 0, 0.12, 1)', fill: 'forwards' });
 
+				// Schedule gradient ease-out near the end of the animation so the gradient eases out while the text leaves
+				const gradientFadeWindow = Math.min(0.12, entryOffset); // fraction of duration to use for the gradient ease-out
+				const gradientOutDelay = Math.max(0, (1 - gradientFadeWindow - 0.02) * durationSeconds * 1000); // ms
+				const gradientOutTimer = setTimeout(() => {
+					// switch gradient to bg-out to ease it out as the text leaves
+					alertBoxDiv.classList.remove('bg-in');
+					requestAnimationFrame(() => {
+						alertBoxDiv.classList.add('bg-out');
+					});
+				}, gradientOutDelay);
+
 				// Store state for live resize adjustments
 				runningAlertState = {
 					anim,
@@ -1837,15 +1849,18 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					speed,
 					slowdownFactor,
 					alertBoxContent,
-					alertBoxDiv
+					alertBoxDiv,
+					gradientOutTimer
 				};
 
 				anim.onfinish = () => {
 					// Cleanup
+					clearTimeout(gradientOutTimer);
 					alertBoxContent.style.transform = '';
 					alertBoxContent.style.opacity = '';
 					alertBoxContent.classList.remove('scroll-alert-content');
-					alertBoxDiv.classList = '';
+					// Reset gradient classes and background
+					alertBoxDiv.classList.remove('bg-in', 'bg-out', background);
 					alertBoxDiv.style.opacity = '';
 					widgetLocked = false;
 					runningAlertState = null;
@@ -1876,8 +1891,9 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 		// messageListDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 		// backgroundDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 		alertBoxDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-		// Animate gradient in
+		// Animate gradient in (ensure any bg-out is cleared first)
 		requestAnimationFrame(() => {
+			alertBoxDiv.classList.remove('bg-out');
 			alertBoxDiv.classList.add('bg-in');
 		});
 
