@@ -1755,25 +1755,60 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 
 	// Start the animation
 	widgetLocked = true;
-	// messageListDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-	// backgroundDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-	alertBoxDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 
-	// To stop the animation (remove the animation property):
-	setTimeout(() => {
-		// messageListDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-		// backgroundDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-		alertBoxDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+	if (background === 'twitch') {
+		// Scroll-right-to-left like a news ticker. We measure widths to pick a natural duration.
+		alertBoxDiv.style.opacity = '1';
+		alertBoxContent.classList.add('scroll-alert-content');
+
+		// Allow the DOM to update so scrollWidth/clientWidth return correct values
 		setTimeout(() => {
-			alertBoxDiv.classList = '';
-			widgetLocked = false;
-			if (alertQueue.length > 0) {
-				console.debug("Pulling next alert from the queue");
-				let data = alertQueue.shift();
-				ShowAlert(data.message, data.background, data.duration);
-			}
-		}, 700);
-	}, duration); // Remove after 5 seconds
+			const contentWidth = alertBoxContent.scrollWidth;
+			const containerWidth = alertBoxDiv.clientWidth;
+			const speed = 160; // pixels per second — tweakable
+			let durationSeconds = (contentWidth + containerWidth) / speed;
+			if (durationSeconds < 3) durationSeconds = 3; // ensure it's not too quick
+
+			// Use the scroll keyframes; linear timing maps keyframe percentages to time, letting the keyframes mimic easing
+			alertBoxContent.style.animation = `scrollAlert ${durationSeconds}s linear forwards`;
+
+			// Cleanup when animation finishes
+			setTimeout(() => {
+				alertBoxContent.style.animation = '';
+				alertBoxContent.classList.remove('scroll-alert-content');
+				alertBoxDiv.classList = '';
+				alertBoxDiv.style.opacity = '';
+				widgetLocked = false;
+				if (alertQueue.length > 0) {
+					console.debug("Pulling next alert from the queue");
+					let data = alertQueue.shift();
+					ShowAlert(data.message, data.background, data.duration);
+				}
+			}, durationSeconds * 1000 + 120);
+		}, 0);
+
+	} else {
+		// Existing fade behavior for non-Twitch alerts
+		// messageListDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+		// backgroundDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+		alertBoxDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+
+		// To stop the animation (remove the animation property):
+		setTimeout(() => {
+			// messageListDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+			// backgroundDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+			alertBoxDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+			setTimeout(() => {
+				alertBoxDiv.classList = '';
+				widgetLocked = false;
+				if (alertQueue.length > 0) {
+					console.debug("Pulling next alert from the queue");
+					let data = alertQueue.shift();
+					ShowAlert(data.message, data.background, data.duration);
+				}
+			}, 700);
+		}, duration); // Remove after 5 seconds
+	}
 }
 
 function GetWinnersList(gifts) {

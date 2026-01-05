@@ -335,3 +335,43 @@ li {
 		background-color: #D12025;
 	}
 }
+
+/* scrolling alert animation for Twitch alerts (right → left, smooth ease-in, faster centre, slow exit) */
+.scroll-alert-content {
+	display: inline-block;
+	white-space: nowrap;
+	transform: translateX(100%);
+	will-change: transform, opacity;
+}
+
+@keyframes scrollAlert {
+	0% {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+
+	8% {
+		opacity: 1; /* fade in quickly */
+	}
+
+	30% {
+		/* entered the view and accelerating */
+		transform: translateX(30%);
+	}
+
+	60% {
+		/* cruising through the middle (faster) */
+		transform: translateX(-20%);
+	}
+
+	92% {
+		/* approaching the left edge (slow down) */
+		transform: translateX(-100%);
+		opacity: 1;
+	}
+
+	100% {
+		transform: translateX(-100%);
+		opacity: 0; /* fade out */
+	}
+}
