@@ -1755,15 +1755,15 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 
 	// Start the animation
 	widgetLocked = true;
-	// messageListDiv.style.animation = 'hideAlertBox 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-	// backgroundDiv.style.animation = 'hideAlertBox 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-	alertBoxDiv.style.animation = 'showAlertBox 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+	// messageListDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+	// backgroundDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+	alertBoxDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 
 	// To stop the animation (remove the animation property):
 	setTimeout(() => {
-		// messageListDiv.style.animation = 'showAlertBox 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-		// backgroundDiv.style.animation = 'showAlertBox 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
-		alertBoxDiv.style.animation = 'hideAlertBox 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+		// messageListDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+		// backgroundDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+		alertBoxDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 		setTimeout(() => {
 			alertBoxDiv.classList = '';
 			widgetLocked = false;
@@ -1772,7 +1772,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				let data = alertQueue.shift();
 				ShowAlert(data.message, data.background, data.duration);
 			}
-		}, 500);
+		}, 700);
 	}, duration); // Remove after 5 seconds
 }
 
