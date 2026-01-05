@@ -1813,28 +1813,15 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				alertBoxContent.style.transform = `translateX(${startX}px)`;
 				alertBoxContent.style.opacity = '1';
 
-// Keyframes: smooth movement-only easing (ease-in entry, linear middle, ease-out exit). Opacity remains constant.
-			let midA = Math.max(entryOffset + 0.02, 0.25);
-			let midB = Math.min(exitOffset - 0.02, 0.75);
-			if (midA >= midB) {
-				midA = Math.max(entryOffset + 0.01, entryOffset);
-				midB = Math.min(exitOffset - 0.01, exitOffset);
-				if (midA >= midB) {
-					midA = entryOffset;
-					midB = exitOffset;
-				}
-			}
+// Use a single smooth ease-in-out curve for the entire movement to avoid abrupt speed changes.
+			// Two keyframes define start and end; global easing handles smooth entry/exit.
 			const keyframes = [
-				{ transform: `translateX(${startX}px)`, offset: 0 },
-				{ transform: `translateX(${pos(entryOffset)}px)`, offset: entryOffset, easing: 'cubic-bezier(0.4, 0, 1, 1)' }, // ease-in (movement)
-				{ transform: `translateX(${pos(midA)}px)`, offset: midA, easing: 'linear' },
-				{ transform: `translateX(${pos(midB)}px)`, offset: midB, easing: 'linear' },
-				{ transform: `translateX(${pos(exitOffset)}px)`, offset: exitOffset, easing: 'cubic-bezier(0, 0, 0.2, 1)' }, // ease-out (movement)
-				{ transform: `translateX(${endX}px)`, offset: 1, easing: 'cubic-bezier(0, 0, 0.2, 1)' }
-				];
+				{ transform: `translateX(${startX}px)` },
+				{ transform: `translateX(${endX}px)` }
+			];
 
-				// Use the Web Animations API for precise pixel movement
-				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, fill: 'forwards' });
+				// Use the Web Animations API with a single ease-in-out for smooth motion
+				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
 
 				// Store state for live resize adjustments
 				runningAlertState = {
@@ -1923,12 +1910,12 @@ window.addEventListener('resize', () => {
 		const remainingDuration = Math.max((remainingDistance / state.speed) * 1000, 250);
 		// cancel and start new animation from currentX to newEndX
 		anim.cancel();
-		// Movement-only easing to smoothly exit the viewport; opacity is constant
+		// Continue with the same smooth ease-in-out curve; compute remaining duration to preserve velocity
 		const newKeyframes = [
-			{ transform: `translateX(${currentX}px)`, offset: 0 },
-			{ transform: `translateX(${newEndX}px)`, offset: 1, easing: 'cubic-bezier(0, 0, 0.2, 1)' }
+			{ transform: `translateX(${currentX}px)` },
+			{ transform: `translateX(${newEndX}px)` }
 		];
-		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, fill: 'forwards' });
+		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
 		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000 };
 		newAnim.onfinish = anim.onfinish;
 	} catch (e) {
