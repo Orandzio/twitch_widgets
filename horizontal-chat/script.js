@@ -1813,31 +1813,28 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				alertBoxContent.style.transform = `translateX(${startX}px)`;
 				alertBoxContent.style.opacity = '1';
 
-// Use three keyframes: start, a near-end marker, and the final end position.
-			// The final segment uses a slightly snappier easing so the alert exits a tad quicker without feeling abrupt.
+// Use a single smooth ease-in-out curve for the entire movement to avoid abrupt speed changes.
+			// Two keyframes define start and end; global easing handles smooth entry/exit.
 			const keyframes = [
-				{ transform: `translateX(${startX}px)`, offset: 0 },
-				{ transform: `translateX(${pos(exitOffset)}px)`, offset: exitOffset, easing: 'cubic-bezier(0.28, 0, 0.12, 1)' },
-				{ transform: `translateX(${endX}px)`, offset: 1, easing: 'cubic-bezier(0.14, 0, 0.12, 1)' }
+				{ transform: `translateX(${startX}px)` },
+				{ transform: `translateX(${endX}px)` }
 			];
 
-			// Use the Web Animations API; per-keyframe easing gives a mild acceleration on the final segment
-			const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, fill: 'forwards' });
+				// Use the Web Animations API with a single ease-in-out for smooth motion
+				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, easing: 'cubic-bezier(0.28, 0, 0.12, 1)', fill: 'forwards' });
 
-			// Store state for live resize adjustments
-			runningAlertState = {
-				anim,
-				startX,
-				endX,
-				distance,
-				durationSeconds,
-				speed,
-				slowdownFactor,
-				entryOffset,
-				exitOffset,
-				alertBoxContent,
-				alertBoxDiv
-			};
+				// Store state for live resize adjustments
+				runningAlertState = {
+					anim,
+					startX,
+					endX,
+					distance,
+					durationSeconds,
+					speed,
+					slowdownFactor,
+					alertBoxContent,
+					alertBoxDiv
+				};
 
 				anim.onfinish = () => {
 					// Cleanup
@@ -1919,8 +1916,7 @@ window.addEventListener('resize', () => {
 			{ transform: `translateX(${currentX}px)` },
 			{ transform: `translateX(${newEndX}px)` }
 		];
-		// Use the same slightly snappier easing for exits so resize continuations finish a bit quicker
-			const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: Math.max(remainingDuration * (state.slowdownFactor || 1.0) * 0.85, 200), easing: 'cubic-bezier(0.14, 0, 0.12, 1)', fill: 'forwards' });
+		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: Math.max(remainingDuration * (state.slowdownFactor || 1.0) * 0.85, 200), easing: 'cubic-bezier(0.28, 0, 0.12, 1)', fill: 'forwards' });
 		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: (Math.max(remainingDuration * (state.slowdownFactor || 1.0) * 0.85, 200) / 1000) };
 		newAnim.onfinish = anim.onfinish;
 	} catch (e) {
