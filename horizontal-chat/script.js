@@ -1856,18 +1856,46 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				anim.onfinish = () => {
 					// Cleanup
 					clearTimeout(gradientOutTimer);
-					alertBoxContent.style.transform = '';
-					alertBoxContent.style.opacity = '';
-					alertBoxContent.classList.remove('scroll-alert-content');
-					// Reset gradient classes and background
-					alertBoxDiv.classList.remove('bg-in', 'bg-out', background);
-					alertBoxDiv.style.opacity = '';
-					widgetLocked = false;
-					runningAlertState = null;
-					if (alertQueue.length > 0) {
-						console.debug("Pulling next alert from the queue");
-						let data = alertQueue.shift();
-						ShowAlert(data.message, data.background, data.duration);
+					// Helper to finalise cleanup after gradient transition finishes
+					const finishCleanup = () => {
+						alertBoxContent.style.transform = '';
+						alertBoxContent.style.opacity = '';
+						alertBoxContent.classList.remove('scroll-alert-content');
+						// Reset gradient classes and background
+						alertBoxDiv.classList.remove('bg-in', 'bg-out', background);
+						alertBoxDiv.style.opacity = '';
+						widgetLocked = false;
+						runningAlertState = null;
+						if (alertQueue.length > 0) {
+							console.debug("Pulling next alert from the queue");
+							let data = alertQueue.shift();
+							ShowAlert(data.message, data.background, data.duration);
+						}
+					};
+
+					// If the gradient is already easing out, wait for the transition to finish before cleaning up
+					if (alertBoxDiv.classList.contains('bg-out')) {
+						alertBoxDiv.addEventListener('transitionend', (ev) => {
+							if (!ev.propertyName || ev.propertyName.includes('background') || ev.propertyName.includes('background-position')) {
+								finishCleanup();
+							}
+						}, { once: true });
+						// Fallback in case transitionend doesn't fire
+						setTimeout(finishCleanup, 1400);
+					}
+					// If it's still in bg-in state, trigger bg-out now so we get the ease-out transition
+					else if (alertBoxDiv.classList.contains('bg-in')) {
+						alertBoxDiv.classList.remove('bg-in');
+						requestAnimationFrame(() => alertBoxDiv.classList.add('bg-out'));
+						alertBoxDiv.addEventListener('transitionend', (ev) => {
+							if (!ev.propertyName || ev.propertyName.includes('background') || ev.propertyName.includes('background-position')) {
+								finishCleanup();
+							}
+						}, { once: true });
+						setTimeout(finishCleanup, 1400);
+					} else {
+						// No gradient classes present, finish immediately
+						finishCleanup();
 					}
 				};
 			} catch (e) {
