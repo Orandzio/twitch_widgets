@@ -69,6 +69,8 @@ html {
 	justify-content: center;
 	opacity: 0;
 	will-change: opacity;
+	/* smoother curved animation timing */
+	animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 } 
 
 #alertBoxContent {
