@@ -1799,7 +1799,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 			const slowdownFactor = 0.5; // reduced from 1.35 to speed up exit timing
 			durationSeconds *= slowdownFactor;
 			// Minimum duration to allow a readable entry. Adjusted so tiny messages still readable.
-			if (durationSeconds < 1.5) durationSeconds = 1.5;
+			if (durationSeconds < 1.5) durationSeconds = 4.0;
 				const absoluteEntryTime = 0.6; // seconds for entry time heuristic
 				// Keep entry window between 6% and 18% of the travel distance so entry feels smooth for short and long messages
 				const entryOffset = Math.min(0.18, Math.max(0.06, absoluteEntryTime / durationSeconds));
