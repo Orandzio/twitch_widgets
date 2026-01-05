@@ -1792,7 +1792,8 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				const distance = startX - endX;
 
 				// Speed tuning (px per second). Lower = slower. Adjust to taste.
-				const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
+				// Apply a small slow-down factor so the animation is a tad slower by default
+				const speed = twitchAlertSpeed * 0.8; // px/s (configurable via ?twitchAlertSpeed=)
 				let durationSeconds = distance / speed;
 
 				// place content fully off-screen to the right immediately so it isn't visible before animation starts
