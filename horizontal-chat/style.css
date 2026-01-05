@@ -1,7 +1,7 @@
 * {
 	margin: 0;
 	padding: 0;
-	--margin: 0px;
+	--margin: 20px;
 	--border-radius: 0.5em;
 }
 
@@ -13,8 +13,8 @@ html {
 	width: 100vw;
 	height: 100vh;
 	scroll-behavior: smooth;
-	/* background: rgba(0, 0, 0, 0.884); */
-	font-size: 18px;
+	/* background: #000000d9; */
+	font-size: 30px;
 	font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 	color: white;
 	text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
@@ -44,135 +44,95 @@ html {
 
 #messageList {
 	position: absolute;
-	bottom: 0;
-	right: 0;
-	display: flex;
-	align-items: flex-end;
-	flex-direction: row;
-	flex-wrap: nowrap;
-	text-justify: right;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-#alertBox {
-	position: absolute;
-	bottom: 0;
-	right: 50%;
-	transform: translateX(50%);
-	overflow: hidden;
-	white-space: nowrap;
+	left: 0;
 	width: 100%;
-	height: 50px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	opacity: 0;
-	will-change: opacity;
-	/* smoother curved animation timing */
-	animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-	/* positioning context for the gradient pseudo-element */
-	position: relative;
-} 
-
-/* Gradient is rendered in a pseudo-element so it can be faded independently of the text */
-#alertBox::before {
-	content: "";
-	position: absolute;
-	inset: 0;
-	z-index: -1;
-	background: var(--alert-background, transparent);
-	background-size: 200% 100%;
-	/* start the gradient slightly off-screen to the right for a longer, smoother ease-in */
-	background-position: 110% 50%;
-	/* Longer, smoother transition for the gradient to ease in/out */
-	transition: background-position 1.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-	opacity: 0;
-	will-change: background-position, opacity;
 }
 
-#alertBox.bg-in::before {
-	background-position: 50% 50%;
-	opacity: 1;
-}
-
-#alertBox.bg-out::before {
-	/* move slightly past the left edge for a smooth ease-out */
-	background-position: -10% 50%;
-	opacity: 0;
-} 
-
-#alertBoxContent {
-	font-weight: 700;
-	line-height: 50px;
-	text-align: center;
-	/* background-color: red; */
-} 
-
-#alertBoxContent img {
-  max-height: 36px;
-  height: auto;
-  vertical-align: middle;
-} 
-
-#background {
-	position: absolute;
+.normalScrollDirection {
 	bottom: 0;
-	right: 50%;
-	transform: translateX(50%);
-	width: 100%;
-	height: 50px;
-	background: var(--background);
-	bottom: calc(-1 * var(--margin));
-	z-index: -100;
 }
 
-@keyframes showAlertBox {
-	0% {
-		opacity: 0;
-	}
-
-	100% {
-		opacity: 1;
-	}
-}
-
-@keyframes hideAlertBox {
-	0% {
-		opacity: 1;
-	}
-
-	100% {
-		opacity: 0;
-	}
+.reverseScrollDirection {
+	display: flex;
+	top: 0;
+	flex-direction: column-reverse;
 }
 
 li {
 	list-style: none;
 	/* overflow: hidden; */
-	max-width: 0px;
+	max-height: 0;
+	margin: 10px 0px 0px 0px;
 	transition: all 1s ease-in-out;
+}
+
+.reverseLineItemDirection {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
 }
 
 .slide-fade li {
 	transition: all var(--animation-speed) ease-out;
+	/* opacity: 0; */
+}
+
+.slide-fade li.show {
 	/* opacity: 1; */
 }
 
 #IPutThisHereSoICanCalculateHowBigEachMessageIsSupposedToBeBeforeIAddItToTheMessageList {
-	/* margin-top: 10px; */
-	background: #2FB774;
-	display: inline;
 	opacity: 0;
-	overflow: hidden;
-	white-space: nowrap;
+}
+
+#firstMessage,
+#sharedChat {
+	display: none;
+	font-weight: 500;
+	font-size: 0.7em;
+}
+
+.bubble {
+	background: var(--bubble-color) !important;
+	padding: 0.5em 1em;
+	border-radius: var(--border-radius);
+}
+
+.highlightMessage {
+	/* background: #adadad46 !important; */
+	background: #414141e5 !important;
+	box-shadow: inset 0 0 0 0.1em rgb(94, 94, 94);
+	padding: 0.5em 1em;
+	border-radius: var(--border-radius);
+}
+
+.message-contents {
+	display: flex;
+	flex-direction: row;
+	gap: 0.5em;
+}
+
+.add-this-class-to-the-thing-to-make-all-the-text-centered-vertically-because-that-looks-much-better {
+	align-items: center;
+}
+
+#avatar {
+	width: 2em;
+}
+
+#avatar:empty {
+	display: none;
 }
 
 .avatar {
-	height: 1em;
-	margin: 1px;
-	transform: translate(0px, 0.25em);
-	border-radius: 50%
+    width: 2em;                /* Set width equal to height */
+    height: 2em;
+    margin: 1px;
+    transform: translate(0px, 0.25em);
+    border-radius: 50%;
+    object-fit: cover;         /* Crop to fill the circle */
+    overflow: hidden;          /* Ensure no overflow outside the circle */
+    display: inline-block;     /* Just in case */
 }
 
 .timestamp,
@@ -183,7 +143,6 @@ li {
 	font-size: 0.7em;
 	/* padding: 5px 15px; */
 	padding: 0.15em 0.5em;
-
 }
 
 .bits {
@@ -206,6 +165,24 @@ li {
 	transform: translate(0px, 0.4em);
 }
 
+.productImage {
+	height: 3em;
+	border-radius: 0.25em;
+	transform: translate(0px, 0.25em);
+}
+
+.youtubeThumbnail {
+	width: 5em;
+	border-radius: 0.25em;
+	transform: translate(0px, 0.25em);
+}
+
+/* .centerThatShitHomie {
+	display: inline-block;
+	width: 100%;
+	text-align: center;
+} */
+
 #badgeList {
 	margin: 0px 5px;
 }
@@ -219,109 +196,165 @@ li {
 	font-weight: 700;
 }
 
-#message {
-	font-weight: 700;
-	line-height: 1.7em;
-	margin: 0px 5px;
-}
-
-/* .firstMessage {
-	display: none;
-	font-size: 0.7em;
-} */
-
-/* .highlightMessage {
-	background: #adadad46;
-	padding: 20px 40px;
-	border-radius: var(--border-radius);
-} */
-
-/* .reply {
+#reply {
 	display: none;
 	overflow: hidden;
-	white-space: nowrap;
+	white-space: normal; /* Allow line wrapping */
 	text-overflow: ellipsis;
+	word-break: break-word; /* Break long words if necessary */
 	font-size: 0.7em;
 	opacity: 0.5;
-} */
+}
 
-/* .card {
+#message {
+	font-weight: 400;
+	line-height: var(--line-spacing);
+}
+
+#card {
 	background: #adadad46;
-	padding: 20px 40px;
+	padding: 0.5em 1em;
 	border-radius: var(--border-radius);
+}
+
+.youtube-super-sticker {
+	height: 2em;
+	margin: 1px;
+	transform: translate(0px, 0.25em);
+}
+
+.kick-gift,
+.tiktok-gift {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 1em;
+	padding: 0.5em;
+	border-radius: var(--border-radius);
+	max-width: 100%;
+}
+
+.kick-gift-avatar,
+.tiktok-gift-avatar {
+	height: 3em;
+	margin: 1px;
+	border-radius: 50%;
+	justify-content: left;
+	flex-shrink: 0;
+}
+
+.kick-gift-contents,
+.tiktok-gift-message {
+	flex-grow: 1;
+	/* white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis; */
+	gap: 1em;
+}
+
+/* .kick-gift-contents {
+	text-align: center;
 } */
 
-/* .youtube-super-sticker {
-	display: block;
-} */
+#kick-gift-message {
+	font-size: 0.9em;
+}
 
-/* .sticker-img {
+.kick-gift-sticker,
+.tiktok-gift-sticker {
+	flex-shrink: 0;
+	justify-content: flex-end;
+
+	filter: drop-shadow(5px 5px 5px #00000060);
+}
+
+.tiktok-gift-sticker {
+	height: 2.5em;
+}
+
+.kick-gift-sticker {
 	height: 5em;
-} */
+}
+
+#tiktok-gift-repeat-count {
+	justify-content: flex-end;
+	font-size: 1.5em;
+	font-style: italic;
+	font-weight: 500;
+}
 
 /*****************/
 /** CARD COLORS **/
 /*****************/
 
 .announcementBlue {
-	--alert-background: linear-gradient(#03d3d7, #8d49fe);
-} 
+	background: linear-gradient(#03d3d7, #8d49fe) !important;
+}
 
 .announcementGreen {
-	--alert-background: linear-gradient(#01da86, #55bee4);
-} 
+	background: linear-gradient(#01da86, #55bee4) !important;
+}
 
 .announcementOrange {
-	--alert-background: linear-gradient(#feb419, #e1df00);
-} 
+	background: linear-gradient(#feb419, #e1df00) !important;
+}
 
 .announcementPurple {
-	--alert-background: linear-gradient(#9548ff, #fc74e6);
-} 
+	background: linear-gradient(#9548ff, #fc74e6) !important;
+}
 
 .twitch {
-	--alert-background: linear-gradient(#6d5ca1, #9146ff);
-} 
+	background: linear-gradient(#6d5ca1, #9146ff) !important;
+}
 
 .youtube {
-	--alert-background: linear-gradient(#FF6C60, #FF0707);
-} 
+	background: linear-gradient(#FF6C60, #FF0707) !important;
+}
 
 .kick {
-	--alert-background: linear-gradient(#53fc18, #005600);
-} 
+	background: linear-gradient(#32b602, #005600) !important;
+}
 
 .streamlabs {
-	--alert-background: linear-gradient(#73dabb, #397765);
-} 
+	background: linear-gradient(#73dabb, #397765) !important;
+}
 
 .streamelements {
-	--alert-background: linear-gradient(#263b8a, #0a112a);
-} 
+	background: linear-gradient(#263b8a, #0a112a) !important;
+}
 
 .patreon {
-	--alert-background: linear-gradient(#c76633, #fd5e0a);
-} 
+	background: linear-gradient(#c76633, #fd5e0a) !important;
+}
 
 .kofi {
-	--alert-background: linear-gradient(#54c7ee, #08c2ff);
-} 
+	background: linear-gradient(#54c7ee, #08c2ff) !important;
+}
 
 .tipeeeStream {
-	--alert-background: linear-gradient(#120e23, #5d192a);
-} 
+	background: linear-gradient(#120e23, #5d192a) !important;
+}
 
 .fourthwall {
-	--alert-background: linear-gradient(#466edb, #1c56f5);
-} 
+	background: linear-gradient(#466edb, #1c56f5) !important;
+}
 
 .tiktok {
-	--alert-background: linear-gradient(#262626, #000000);
-} 
+	background: linear-gradient(#262626, #000000) !important;
+}
+
+.fourthwall {
+	background: linear-gradient(#466edb, #1c56f5) !important;
+}
+
+.thumbnail {
+	background: linear-gradient(#494949, #202020) !important;
+}
+
 
 .blank {
-	--alert-background: #adadad00;
-} 
+	background: #adadad00 !important;
+}
 
 /****************/
 /** ANIMATIONS **/
@@ -358,37 +391,5 @@ li {
 
 	100% {
 		background-color: #D12025;
-	}
-}
-
-/* scrolling alert animation for Twitch alerts (right → left, smooth ease-in, faster centre, slow exit) */
-.scroll-alert-content {
-	display: inline-block;
-	white-space: nowrap;
-	will-change: transform; /* keep opacity constant to avoid fades */
-}
-
-@keyframes scrollAlert {
-	0% {
-		transform: translateX(100%);
-	}
-
-	30% {
-		/* entered the view and accelerating */
-		transform: translateX(30%);
-	}
-
-	60% {
-		/* cruising through the middle (faster) */
-		transform: translateX(-20%);
-	}
-
-	92% {
-		/* approaching the left edge (slow down) */
-		transform: translateX(-100%);
-	}
-
-	100% {
-		transform: translateX(-100%);
 	}
 }
