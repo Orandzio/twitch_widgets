@@ -68,25 +68,38 @@ html {
 	align-items: center;
 	justify-content: center;
 	opacity: 0;
-	will-change: opacity, background-position;
+	will-change: opacity;
 	/* smoother curved animation timing */
 	animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-	/* Prepare gradient animation: background-position will smoothly transition to create ease-in/out on show/hide */
+	/* positioning context for the gradient pseudo-element */
+	position: relative;
+} 
+
+/* Gradient is rendered in a pseudo-element so it can be faded independently of the text */
+#alertBox::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: var(--alert-background, transparent);
 	background-size: 200% 100%;
 	/* start the gradient slightly off-screen to the right for a longer, smoother ease-in */
 	background-position: 110% 50%;
 	/* Longer, smoother transition for the gradient to ease in/out */
 	transition: background-position 1.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-} 
-
-/* Gradient state helper classes */
-#alertBox.bg-in {
-	background-position: 50% 50%;
+	opacity: 0;
+	will-change: background-position, opacity;
 }
 
-#alertBox.bg-out {
+#alertBox.bg-in::before {
+	background-position: 50% 50%;
+	opacity: 1;
+}
+
+#alertBox.bg-out::before {
 	/* move slightly past the left edge for a smooth ease-out */
 	background-position: -10% 50%;
+	opacity: 0;
 } 
 
 #alertBoxContent {
@@ -255,64 +268,64 @@ li {
 /*****************/
 
 .announcementBlue {
-	background: linear-gradient(#03d3d7, #8d49fe) !important;
-}
+	--alert-background: linear-gradient(#03d3d7, #8d49fe);
+} 
 
 .announcementGreen {
-	background: linear-gradient(#01da86, #55bee4) !important;
-}
+	--alert-background: linear-gradient(#01da86, #55bee4);
+} 
 
 .announcementOrange {
-	background: linear-gradient(#feb419, #e1df00) !important;
-}
+	--alert-background: linear-gradient(#feb419, #e1df00);
+} 
 
 .announcementPurple {
-	background: linear-gradient(#9548ff, #fc74e6) !important;
-}
+	--alert-background: linear-gradient(#9548ff, #fc74e6);
+} 
 
 .twitch {
-	background: linear-gradient(#6d5ca1, #9146ff) !important;
-}
+	--alert-background: linear-gradient(#6d5ca1, #9146ff);
+} 
 
 .youtube {
-	background: linear-gradient(#FF6C60, #FF0707) !important;
-}
+	--alert-background: linear-gradient(#FF6C60, #FF0707);
+} 
 
 .kick {
-	background: linear-gradient(#53fc18, #005600) !important;
-}
+	--alert-background: linear-gradient(#53fc18, #005600);
+} 
 
 .streamlabs {
-	background: linear-gradient(#73dabb, #397765) !important;
-}
+	--alert-background: linear-gradient(#73dabb, #397765);
+} 
 
 .streamelements {
-	background: linear-gradient(#263b8a, #0a112a) !important;
-}
+	--alert-background: linear-gradient(#263b8a, #0a112a);
+} 
 
 .patreon {
-	background: linear-gradient(#c76633, #fd5e0a) !important;
-}
+	--alert-background: linear-gradient(#c76633, #fd5e0a);
+} 
 
 .kofi {
-	background: linear-gradient(#54c7ee, #08c2ff) !important;
-}
+	--alert-background: linear-gradient(#54c7ee, #08c2ff);
+} 
 
 .tipeeeStream {
-	background: linear-gradient(#120e23, #5d192a) !important;
-}
+	--alert-background: linear-gradient(#120e23, #5d192a);
+} 
 
 .fourthwall {
-	background: linear-gradient(#466edb, #1c56f5) !important;
-}
+	--alert-background: linear-gradient(#466edb, #1c56f5);
+} 
 
 .tiktok {
-	background: linear-gradient(#262626, #000000) !important;
-}
+	--alert-background: linear-gradient(#262626, #000000);
+} 
 
 .blank {
-	background: #adadad00 !important;
-}
+	--alert-background: #adadad00;
+} 
 
 /****************/
 /** ANIMATIONS **/
