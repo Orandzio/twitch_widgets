@@ -67,7 +67,9 @@ html {
 	display: flex;
 	align-items: flex-end;
 	justify-content: center;
-}
+	opacity: 0;
+	will-change: opacity;
+} 
 
 #alertBoxContent {
 	font-weight: 700;
@@ -94,21 +96,21 @@ html {
 
 @keyframes showAlertBox {
 	0% {
-		bottom: calc(-1 * var(--margin) - 1.7em);
+		opacity: 0;
 	}
 
 	100% {
-		bottom: 0px;
+		opacity: 1;
 	}
 }
 
 @keyframes hideAlertBox {
 	0% {
-		bottom: 0px;
+		opacity: 1;
 	}
 
 	100% {
-		bottom: calc(-1 * var(--margin) - 1.7em);
+		opacity: 0;
 	}
 }
 
