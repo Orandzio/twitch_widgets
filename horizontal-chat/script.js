@@ -1754,6 +1754,10 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 
 	// Set the background
 	alertBoxDiv.classList.add(background);
+	// Smoothly ease the gradient in: add 'bg-in' on the next frame so the transition runs
+	requestAnimationFrame(() => {
+		alertBoxDiv.classList.add('bg-in');
+	});
 
 	// Start the animation
 	widgetLocked = true;
@@ -1796,10 +1800,10 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
 				let durationSeconds = distance / speed;
 			// Slowdown factor controls overall speed; lower = faster exit
-			const slowdownFactor = 0.5; // reduced from 1.35 to speed up exit timing
+			const slowdownFactor = 1.1; // reduced from 1.35 to speed up exit timing
 			durationSeconds *= slowdownFactor;
 			// Minimum duration to allow a readable entry. Adjusted so tiny messages still readable.
-			if (durationSeconds < 1.5) durationSeconds = 4.0;
+			if (durationSeconds < 1.5) durationSeconds = 1.5;
 				const absoluteEntryTime = 0.6; // seconds for entry time heuristic
 				// Keep entry window between 6% and 18% of the travel distance so entry feels smooth for short and long messages
 				const entryOffset = Math.min(0.18, Math.max(0.06, absoluteEntryTime / durationSeconds));
@@ -1872,6 +1876,10 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 		// messageListDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 		// backgroundDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 		alertBoxDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+		// Animate gradient in
+		requestAnimationFrame(() => {
+			alertBoxDiv.classList.add('bg-in');
+		});
 
 		// To stop the animation (remove the animation property):
 		setTimeout(() => {
@@ -1879,15 +1887,38 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 			// backgroundDiv.style.animation = 'showAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 			alertBoxDiv.style.animation = 'hideAlertBox 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards';
 			setTimeout(() => {
-				alertBoxDiv.classList = '';
-				widgetLocked = false;
-				if (alertQueue.length > 0) {
-					console.debug("Pulling next alert from the queue");
-					let data = alertQueue.shift();
-					ShowAlert(data.message, data.background, data.duration);
-				}
-			}, 700);
-		}, duration); // Remove after 5 seconds
+				// Start gradient-out transition and wait for it before clearing classes
+				alertBoxDiv.classList.remove('bg-in');
+				alertBoxDiv.classList.add('bg-out');
+
+				const onTransition = (e) => {
+					if (e && e.propertyName && (e.propertyName.indexOf('background') !== -1 || e.propertyName.indexOf('background-position') !== -1)) {
+						alertBoxDiv.removeEventListener('transitionend', onTransition);
+						alertBoxDiv.classList = '';
+						widgetLocked = false;
+						if (alertQueue.length > 0) {
+							console.debug("Pulling next alert from the queue");
+							let data = alertQueue.shift();
+							ShowAlert(data.message, data.background, data.duration);
+						}
+					}
+				};
+
+				// Fallback in case transitionend doesn't fire
+				const fallback = setTimeout(() => {
+					alertBoxDiv.removeEventListener('transitionend', onTransition);
+					alertBoxDiv.classList = '';
+					widgetLocked = false;
+					if (alertQueue.length > 0) {
+						console.debug("Pulling next alert from the queue");
+						let data = alertQueue.shift();
+						ShowAlert(data.message, data.background, data.duration);
+					}
+				}, 800);
+
+				alertBoxDiv.addEventListener('transitionend', onTransition);
+			}, 0);
+		}, duration); // Remove after duration
 	}
 }
 
