@@ -194,7 +194,7 @@ li {
 .announcementOrange { background: linear-gradient(#feb419, #e1df00) !important; }
 .announcementPurple { background: linear-gradient(#9548ff, #fc74e6) !important; }
 
-.twitch { background: linear-gradient(#2d2d24, #9146ff) !important; }
+.twitch { background: linear-gradient(#9146ff, #2d2d24) !important; }
 .youtube { background: linear-gradient(#FF6C60, #FF0707) !important; }
 .kick { background: linear-gradient(#53fc18, #005600) !important; }
 .streamlabs { background: linear-gradient(#73dabb, #397765) !important; }
