@@ -74,10 +74,7 @@ html {
 	/* Prepare gradient animation: background-position will smoothly transition to create ease-in/out on show/hide */
 	background-size: 200% 100%;
 	background-position: 100% 50%;
-	/* Make gradient come in longer and smoother; configure durations via CSS vars */
-	--gradient-in-duration: 1.2s;
-	--gradient-out-duration: 0.9s;
-	transition: background-position var(--gradient-in-duration) cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: background-position 0.65s cubic-bezier(0.28, 0, 0.12, 1), opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 } 
 
 /* Gradient state helper classes */
@@ -87,8 +84,6 @@ html {
 
 #alertBox.bg-out {
 	background-position: 0% 50%;
-	/* Use a quicker ease-out on exit for a smooth ease-out finish */
-	transition: background-position var(--gradient-out-duration) cubic-bezier(0, 0, 0.2, 1), opacity 0.35s cubic-bezier(0, 0, 0.2, 1);
 } 
 
 #alertBoxContent {
