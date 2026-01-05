@@ -1795,11 +1795,11 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 				// Speed tuning (px per second). Lower = slower. Adjust to taste.
 				const speed = twitchAlertSpeed; // px/s (configurable via ?twitchAlertSpeed=)
 				let durationSeconds = distance / speed;
-				// Minimum duration to allow a readable entry. Reduced so tiny messages don't feel 'late'.
-				if (durationSeconds < 1.5) durationSeconds = 1.5;
-
-				// We want the alert to have a smooth curved entry (ease-in), then a steady linear middle,
-				// and a smooth curved exit (ease-out); easing applies to movement only (opacity stays constant).
+			// Slow down overall to make motion less frantic
+			const slowdownFactor = 1.35; // >1 slows down the animation; tweak to taste
+			durationSeconds *= slowdownFactor;
+			// Minimum duration to allow a readable entry. Increased so tiny messages don't feel too fast.
+			if (durationSeconds < 2.0) durationSeconds = 2.0;
 				const absoluteEntryTime = 0.6; // seconds for entry time heuristic
 				// Keep entry window between 6% and 18% of the travel distance so entry feels smooth for short and long messages
 				const entryOffset = Math.min(0.18, Math.max(0.06, absoluteEntryTime / durationSeconds));
@@ -1821,7 +1821,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 			];
 
 				// Use the Web Animations API with a single ease-in-out for smooth motion
-				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+				const anim = alertBoxContent.animate(keyframes, { duration: durationSeconds * 1000, easing: 'cubic-bezier(0.28, 0, 0.12, 1)', fill: 'forwards' });
 
 				// Store state for live resize adjustments
 				runningAlertState = {
@@ -1831,6 +1831,7 @@ function ShowAlert(message, background = null, duration = animationDuration) {
 					distance,
 					durationSeconds,
 					speed,
+					slowdownFactor,
 					alertBoxContent,
 					alertBoxDiv
 				};
@@ -1915,8 +1916,8 @@ window.addEventListener('resize', () => {
 			{ transform: `translateX(${currentX}px)` },
 			{ transform: `translateX(${newEndX}px)` }
 		];
-		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: remainingDuration, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
-		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: remainingDuration / 1000 };
+		const newAnim = state.alertBoxContent.animate(newKeyframes, { duration: Math.max(remainingDuration * (state.slowdownFactor || 1.0) * 0.85, 200), easing: 'cubic-bezier(0.28, 0, 0.12, 1)', fill: 'forwards' });
+		runningAlertState = { ...state, anim: newAnim, startX: currentX, endX: newEndX, distance: (currentX - newEndX), durationSeconds: (Math.max(remainingDuration * (state.slowdownFactor || 1.0) * 0.85, 200) / 1000) };
 		newAnim.onfinish = anim.onfinish;
 	} catch (e) {
 		console.warn('Error adjusting running alert on resize', e);
