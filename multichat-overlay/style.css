@@ -124,6 +124,19 @@ li {
 	display: none;
 }
 
+/* When Show Platform / Show Avatar / Show Timestamps / Show Pronouns (etc.) are
+   toggled off, these spans are left empty rather than removed from the DOM.
+   Collapsing them here (rather than just leaving them invisible) also lets the
+   surrounding whitespace in the HTML template collapse away, so whatever is
+   still enabled (e.g. badges + username) shifts left instead of leaving a gap. */
+#timestamp:empty,
+#platform:empty,
+#badgeList:empty,
+#pronouns:empty,
+#username:empty {
+	display: none;
+}
+
 .avatar {
     width: 2em;                /* Set width equal to height */
     height: 2em;
