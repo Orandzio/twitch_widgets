@@ -29,7 +29,7 @@ const showUsername = GetBooleanParam("showUsername", true);
 const showMessage = GetBooleanParam("showMessage", true);
 const font = urlParams.get("font") || "";
 const fontSize = urlParams.get("fontSize") || "20";
-const lineSpacing = urlParams.get("lineSpacing") || "1.35";
+const lineSpacing = urlParams.get("lineSpacing") || "1.5";
 const useChatBubbles = GetBooleanParam("useChatBubbles", false);
 const bubbleColor = urlParams.get("bubbleColor") || "#000000";
 const bubbleOpacity = urlParams.get("bubbleOpacity") || "0.9";
@@ -713,7 +713,7 @@ async function TwitchChatMessage(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "twitch" && lastUserId == data.user.id) {
-			instance.querySelector("#messageHeader").style.display = "none";
+			userInfoDiv.style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
@@ -1429,7 +1429,7 @@ async function YouTubeMessage(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "youtube" && lastUserId == data.user.id) {
-			instance.querySelector("#messageHeader").style.display = "none";
+			userInfoDiv.style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
@@ -2342,7 +2342,7 @@ async function KickChatMessage(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "kick" && lastUserId == data.sender.id) {
-			instance.querySelector("#messageHeader").style.display = "none";
+			userInfoDiv.style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
@@ -2807,7 +2807,7 @@ async function TikTokChat(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "tiktok" && lastUserId == data.userId) {
-			instance.querySelector("#messageHeader").style.display = "none";
+			userInfoDiv.style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
@@ -3053,6 +3053,20 @@ function ExtractYouTubeVideoId(url) {
 	return match ? match[1] : null;
 }
 
+function SyncMessageIndent(container) {
+	const iconColumn = container.querySelector('#iconColumn');
+	const message = container.querySelector('#message');
+	const messageContainer = container.querySelector('#messageContainer') || container;
+
+	if (!iconColumn || !message || messageContainer.classList.contains('inline-layout'))
+		return;
+
+	const rootStyles = getComputedStyle(document.documentElement);
+	const iconGap = parseFloat(rootStyles.getPropertyValue('--icon-gap')) || 0.25;
+	const gapPx = iconGap * parseFloat(rootStyles.fontSize);
+	message.style.paddingLeft = `${iconColumn.offsetWidth + gapPx}px`;
+}
+
 function AddMessageItem(element, elementID, platform, userId) {
 	// Calculate the height of the div before inserting
 	const tempDiv = document.getElementById('IPutThisHereSoICanCalculateHowBigEachMessageIsSupposedToBeBeforeIAddItToTheMessageList');
@@ -3061,6 +3075,7 @@ function AddMessageItem(element, elementID, platform, userId) {
 	tempDiv.appendChild(tempDivTwoElectricBoogaloo);
 
 	setTimeout(function () {
+		SyncMessageIndent(tempDivTwoElectricBoogaloo);
 		const calculatedHeight = tempDivTwoElectricBoogaloo.offsetHeight + "px";
 
 		// Create a new line item to add to the message list later
@@ -3075,6 +3090,7 @@ function AddMessageItem(element, elementID, platform, userId) {
 
 		// Move the element from the temp div to the new line item
 		lineItem.appendChild(tempDiv.firstElementChild);
+		SyncMessageIndent(lineItem);
 
 		// Add the line item to the list and animate it
 		// We need to manually set the height as straight CSS can't animate on "height: auto"
