@@ -3,6 +3,10 @@
 	padding: 0;
 	--margin: 20px;
 	--border-radius: 0.5em;
+	--icon-size: 1em;
+	--icon-gap: 0.25em;
+	--message-gap: 0.15em;
+	--entry-gap: 0.85em;
 }
 
 body {
@@ -13,11 +17,9 @@ html {
 	width: 100vw;
 	height: 100vh;
 	scroll-behavior: smooth;
-	/* background: #000000d9; */
-	font-size: 30px;
-	font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-	color: white;
-	text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+	font-size: 20px;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	color: #ffffff;
 	overflow-wrap: break-word;
 }
 
@@ -60,9 +62,8 @@ html {
 
 li {
 	list-style: none;
-	/* overflow: hidden; */
 	max-height: 0;
-	margin: 0.85em 0px 0px 0px;
+	margin: var(--entry-gap) 0 0 0;
 	transition: all 1s ease-in-out;
 }
 
@@ -116,12 +117,75 @@ li {
 	align-items: center;
 }
 
+#messageContainer {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	column-gap: var(--icon-gap);
+	row-gap: var(--message-gap);
+	align-items: start;
+}
+
+#messageHeader {
+	display: contents;
+}
+
+#iconColumn {
+	grid-column: 1;
+	grid-row: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--icon-gap);
+	flex-shrink: 0;
+}
+
+#userInfo {
+	grid-column: 2;
+	grid-row: 1;
+	display: flex;
+	align-items: center;
+	gap: 0.35em;
+	min-width: 0;
+}
+
+#message {
+	grid-column: 2;
+	grid-row: 2;
+}
+
+#messageContainer.inline-layout {
+	display: block;
+}
+
+#messageContainer.inline-layout #messageHeader {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--icon-gap);
+}
+
+#messageContainer.inline-layout #iconColumn,
+#messageContainer.inline-layout #userInfo {
+	display: inline-flex;
+}
+
+#messageContainer.inline-layout #message {
+	display: inline;
+}
+
 #avatar {
 	width: 2em;
+	grid-column: 1;
+	grid-row: 1 / span 2;
 }
 
 #avatar:empty {
 	display: none;
+}
+
+#firstMessage,
+#sharedChat,
+#reply {
+	grid-column: 1 / -1;
 }
 
 /* When Show Platform / Show Avatar / Show Timestamps / Show Pronouns (etc.) are
@@ -167,9 +231,11 @@ li {
 
 .platform,
 .badge {
-	height: 1em;
-	margin: 1px 0.3em 1px 1px;
-	transform: translate(0px, 0.25em);
+	width: var(--icon-size);
+	height: var(--icon-size);
+	flex-shrink: 0;
+	display: block;
+	object-fit: contain;
 }
 
 .emote {
@@ -197,12 +263,24 @@ li {
 } */
 
 #badgeList {
-	margin: 0px 5px;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--icon-gap);
+}
+
+#badgeList:empty {
+	display: none;
+}
+
+#platform {
+	display: inline-flex;
+	align-items: center;
 }
 
 #username,
 #title {
 	font-weight: 700;
+	color: #ffffff !important;
 }
 
 .title {
@@ -222,7 +300,7 @@ li {
 #message {
 	font-weight: 400;
 	line-height: var(--line-spacing);
-
+	color: #ffffff;
 }
 
 #card {
