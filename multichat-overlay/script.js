@@ -21,15 +21,15 @@ let kickSubBadges = [];
 /////////////
 
 const showPlatform = GetBooleanParam("showPlatform", true);
-const showAvatar = GetBooleanParam("showAvatar", true);
-const showTimestamps = GetBooleanParam("showTimestamps", true);
+const showAvatar = GetBooleanParam("showAvatar", false);
+const showTimestamps = GetBooleanParam("showTimestamps", false);
 const showBadges = GetBooleanParam("showBadges", true);
-const showPronouns = GetBooleanParam("showPronouns", true);
+const showPronouns = GetBooleanParam("showPronouns", false);
 const showUsername = GetBooleanParam("showUsername", true);
 const showMessage = GetBooleanParam("showMessage", true);
 const font = urlParams.get("font") || "";
-const fontSize = urlParams.get("fontSize") || "30";
-const lineSpacing = urlParams.get("lineSpacing") || "1.7";
+const fontSize = urlParams.get("fontSize") || "20";
+const lineSpacing = urlParams.get("lineSpacing") || "1.35";
 const useChatBubbles = GetBooleanParam("useChatBubbles", false);
 const bubbleColor = urlParams.get("bubbleColor") || "#000000";
 const bubbleOpacity = urlParams.get("bubbleOpacity") || "0.9";
@@ -635,8 +635,7 @@ async function TwitchChatMessage(data) {
 	// Remove the line break
 	if (inlineChat) {
 		instance.querySelector("#colon-separator").style.display = `inline`;
-		instance.querySelector("#line-space").style.display = `none`;
-		instance.querySelector(".message-contents").style.alignItems = 'center';
+		messageContainerDiv.classList.add("inline-layout");
 	}
 
 	// Render platform
@@ -714,7 +713,7 @@ async function TwitchChatMessage(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "twitch" && lastUserId == data.user.id) {
-			userInfoDiv.style.display = "none";
+			instance.querySelector("#messageHeader").style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
@@ -852,7 +851,7 @@ async function TwitchAnnouncement(data) {
 
 	// Remove the line break
 	content.querySelector("#colon-separator").style.display = `inline`;
-	content.querySelector("#line-space").style.display = `none`;
+	content.querySelector("#messageContainer").classList.add("inline-layout");
 
 	// Remove the avatar
 	content.querySelector("#avatar").style.display = `none`;
@@ -1348,8 +1347,7 @@ async function YouTubeMessage(data) {
 	// Remove the line break
 	if (inlineChat) {
 		instance.querySelector("#colon-separator").style.display = `inline`;
-		instance.querySelector("#line-space").style.display = `none`;
-		instance.querySelector(".message-contents").style.alignItems = 'center';
+		messageContainerDiv.classList.add("inline-layout");
 	}
 
 	// Render platform
@@ -1431,7 +1429,7 @@ async function YouTubeMessage(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "youtube" && lastUserId == data.user.id) {
-			userInfoDiv.style.display = "none";
+			instance.querySelector("#messageHeader").style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
@@ -2296,8 +2294,7 @@ async function KickChatMessage(data) {
 	// Remove the line break
 	if (inlineChat) {
 		instance.querySelector("#colon-separator").style.display = `inline`;
-		instance.querySelector("#line-space").style.display = `none`;
-		instance.querySelector(".message-contents").style.alignItems = 'center';
+		messageContainerDiv.classList.add("inline-layout");
 	}
 
 	// Render platform
@@ -2345,7 +2342,7 @@ async function KickChatMessage(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "kick" && lastUserId == data.sender.id) {
-			userInfoDiv.style.display = "none";
+			instance.querySelector("#messageHeader").style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
@@ -2763,8 +2760,7 @@ async function TikTokChat(data) {
 	// Remove the line break
 	if (inlineChat) {
 		instance.querySelector("#colon-separator").style.display = `inline`;
-		instance.querySelector("#line-space").style.display = `none`;
-		instance.querySelector(".message-contents").style.alignItems = 'center';
+		messageContainerDiv.classList.add("inline-layout");
 	}
 
 	// Render platform
@@ -2811,7 +2807,7 @@ async function TikTokChat(data) {
 		const lastPlatform = messageList.lastChild.dataset.platform;
 		const lastUserId = messageList.lastChild.dataset.userId;
 		if (lastPlatform == "tiktok" && lastUserId == data.userId) {
-			userInfoDiv.style.display = "none";
+			instance.querySelector("#messageHeader").style.display = "none";
 			avatarDiv.style.visibility = "hidden";
 			avatarDiv.style.height = "0px";
 		}
