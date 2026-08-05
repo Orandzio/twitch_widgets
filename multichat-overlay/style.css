@@ -168,7 +168,7 @@ li {
 .platform,
 .badge {
 	height: 1em;
-	margin: 1px 0.3em 1px 1px;
+	margin: 1px 0.12em 1px 1px;
 	transform: translate(0px, 0.25em);
 }
 
@@ -222,6 +222,7 @@ li {
 #message {
 	font-weight: 400;
 	line-height: var(--line-spacing);
+	margin-left: 0.35em;
 }
 
 #card {
