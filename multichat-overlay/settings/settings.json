@@ -80,7 +80,7 @@
 			"description": "",
 			"type": "number",
 			"min": 0,
-			"defaultValue": 1.35,
+			"defaultValue": 1.5,
 			"step": ".1",
 			"group": "Appearance"
 		},
