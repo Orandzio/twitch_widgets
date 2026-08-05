@@ -21,31 +21,30 @@
 
 	<template id="messageTemplate">
 		<div id="messageContainer">
-			<div class="message-contents">
-				<div id="avatar"></div>
-				<div>
-					<div id="firstMessage">
-						<span>✨ First Time Chat</span>
-						<span> from viewer</span>
-					</div>
-					<div id="sharedChat">
-						<span id="sharedChatChannel"></span>
-					</div>
-					<label id="userInfo">
-						<span id="timestamp"></span>
-						<span id="badgeList"></span>
-						<span id="platform"></span>
-						<span id="pronouns"></span>
-						<span id="username"></span>
-						<span id="colon-separator" style="display: none;">: </span>
-						<br id="line-space">
-					</label>
-					<div id="reply">
-						<div>➥ Replying to <span id="replyUser"></span>: <span id="replyMsg"></span></div>
-					</div>
-					<span id="message"></span>
-				</div>
+			<div id="firstMessage">
+				<span>✨ First Time Chat</span>
+				<span> from viewer</span>
 			</div>
+			<div id="sharedChat">
+				<span id="sharedChatChannel"></span>
+			</div>
+			<div id="reply">
+				<div>➥ Replying to <span id="replyUser"></span>: <span id="replyMsg"></span></div>
+			</div>
+			<div id="avatar"></div>
+			<div id="messageHeader">
+				<div id="iconColumn">
+					<span id="timestamp"></span>
+					<span id="badgeList"></span>
+					<span id="platform"></span>
+				</div>
+				<label id="userInfo">
+					<span id="pronouns"></span>
+					<span id="username"></span>
+					<span id="colon-separator" style="display: none;">: </span>
+				</label>
+			</div>
+			<span id="message"></span>
 		</div>
 	</template>
 
