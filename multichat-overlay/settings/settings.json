@@ -5,7 +5,7 @@
 			"label": "Show Platform",
 			"description": "",
 			"type": "checkbox",
-			"defaultValue": false,
+			"defaultValue": true,
 			"group": "Appearance"
 		},
 		{
@@ -13,7 +13,7 @@
 			"label": "Show Avatar",
 			"description": "",
 			"type": "checkbox",
-			"defaultValue": true,
+			"defaultValue": false,
 			"group": "Appearance"
 		},
 		{
@@ -21,7 +21,7 @@
 			"label": "Show Timestamps",
 			"description": "",
 			"type": "checkbox",
-			"defaultValue": true,
+			"defaultValue": false,
 			"group": "Appearance"
 		},
 		{
@@ -37,7 +37,7 @@
 			"label": "Show Pronouns",
 			"description": "",
 			"type": "checkbox",
-			"defaultValue": true,
+			"defaultValue": false,
 			"group": "Appearance"
 		},
 		{
@@ -80,7 +80,7 @@
 			"description": "",
 			"type": "number",
 			"min": 0,
-			"defaultValue": 1.7,
+			"defaultValue": 1.35,
 			"step": ".1",
 			"group": "Appearance"
 		},
