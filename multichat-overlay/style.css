@@ -220,6 +220,7 @@ li {
 }
 
 #message {
+	display: block;
 	font-weight: 400;
 	line-height: var(--line-spacing);
 	margin-left: 0.35em;
