@@ -118,20 +118,18 @@ li {
 }
 
 #messageContainer {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	column-gap: var(--icon-gap);
-	row-gap: var(--message-gap);
-	align-items: start;
+	display: flex;
+	flex-direction: column;
+	gap: var(--message-gap);
 }
 
 #messageHeader {
-	display: contents;
+	display: flex;
+	align-items: center;
+	gap: var(--icon-gap);
 }
 
 #iconColumn {
-	grid-column: 1;
-	grid-row: 1;
 	display: flex;
 	align-items: center;
 	gap: var(--icon-gap);
@@ -139,8 +137,6 @@ li {
 }
 
 #userInfo {
-	grid-column: 2;
-	grid-row: 1;
 	display: flex;
 	align-items: center;
 	gap: 0.35em;
@@ -148,8 +144,10 @@ li {
 }
 
 #message {
-	grid-column: 2;
-	grid-row: 2;
+	display: block;
+	min-width: 0;
+	font-weight: 400;
+	line-height: var(--line-spacing);
 }
 
 #messageContainer.inline-layout {
@@ -157,10 +155,8 @@ li {
 }
 
 #messageContainer.inline-layout #messageHeader {
-	display: flex;
-	align-items: center;
+	display: inline-flex;
 	flex-wrap: wrap;
-	gap: var(--icon-gap);
 }
 
 #messageContainer.inline-layout #iconColumn,
@@ -170,12 +166,12 @@ li {
 
 #messageContainer.inline-layout #message {
 	display: inline;
+	padding-left: 0 !important;
 }
 
 #avatar {
-	width: 2em;
-	grid-column: 1;
-	grid-row: 1 / span 2;
+	width: var(--icon-size);
+	flex-shrink: 0;
 }
 
 #avatar:empty {
@@ -185,7 +181,7 @@ li {
 #firstMessage,
 #sharedChat,
 #reply {
-	grid-column: 1 / -1;
+	width: 100%;
 }
 
 /* When Show Platform / Show Avatar / Show Timestamps / Show Pronouns (etc.) are
@@ -202,14 +198,12 @@ li {
 }
 
 .avatar {
-    width: 2em;                /* Set width equal to height */
-    height: 2em;
-    margin: 1px;
-    transform: translate(0px, 0.25em);
-    border-radius: 50%;
-    object-fit: cover;         /* Crop to fill the circle */
-    overflow: hidden;          /* Ensure no overflow outside the circle */
-    display: inline-block;     /* Just in case */
+	width: var(--icon-size);
+	height: var(--icon-size);
+	flex-shrink: 0;
+	border-radius: 50%;
+	object-fit: cover;
+	display: block;
 }
 
 .timestamp,
@@ -280,7 +274,6 @@ li {
 #username,
 #title {
 	font-weight: 700;
-	color: #ffffff !important;
 }
 
 .title {
@@ -295,12 +288,6 @@ li {
 	word-break: break-word; /* Break long words if necessary */
 	font-size: 0.7em;
 	opacity: 0.5;
-}
-
-#message {
-	font-weight: 400;
-	line-height: var(--line-spacing);
-	color: #ffffff;
 }
 
 #card {
